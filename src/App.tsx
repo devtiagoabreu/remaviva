@@ -46,7 +46,7 @@ export default function LandingPageRemaViva() {
     }
     
     // Integração com Google Forms
-    const GOOGLE_FORM_URL = import.meta.env.VITE_GOOGLE_FORM_URL || 'https://docs.google.com/forms/u/0/d/e/FORM_ID/formResponse';
+    const GOOGLE_FORM_URL = 'https://docs.google.com/forms/u/0/d/e/FORM_ID/formResponse';
     
     // Enviar para Google Forms
     const form = new FormData();
