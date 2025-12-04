@@ -36,25 +36,24 @@ const MERCADO_PAGO_LINKS = {
   kit3: 'https://mpago.la/2AdPPmt',
 };
 
-// URLs DO GOOGLE FORMS ATUALIZADAS
+// URLs DO GOOGLE FORMS
 const GOOGLE_FORMS = {
-  gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSd9zNxVhJEW-KOHqKqyONoXl8Gwij4-yuVeUXHJrIzKh77USg/formResponse',
-  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/formResponse'
+  gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSfd_i6wIRpQGKwFHWfmuGpcPSe-Biay9J5T45QYRX_YpBQn4A/formResponse',
+  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSfBN-dZWuGknTwUWrKzhg_-D5kavWCrLaFvAqwgrmOWTkDcQA/formResponse'
 };
 
-// IDs dos campos do Google Forms ATUALIZADOS
+// IDs dos campos do Google Forms
 const FORM_FIELDS = {
   gratuito: {
-    nome: 'entry.475459393',
-    email: 'entry.1587784529',
-    whatsapp: 'entry.1708940276'
+    nome: 'entry.830683209',
+    email: 'entry.1000068465',
+    whatsapp: 'entry.1573965755'
   },
   pago: {
-    nome: 'entry.1160029517',
-    email: 'entry.2081423330',
-    produto: 'entry.2014421681',
-    valor: 'entry.1045548342',
-    whatsapp: 'entry.274487651'
+    nome: 'entry.944565967',
+    email: 'entry.99204833',
+    produto: 'entry.1131324143',
+    valor: 'entry.632841172'
   }
 };
 
@@ -90,9 +89,9 @@ export default function LandingPageRemaViva() {
     formPayload.append(fields.nome, formData.nome);
     formPayload.append(fields.email, formData.email);
     
-    // WhatsApp: envia o valor ou 'NÃO PREENCHEU'
-    const whatsappValue = formData.whatsapp.trim() || 'NÃO PREENCHEU';
-    formPayload.append(fields.whatsapp, whatsappValue);
+    if (formData.whatsapp) {
+      formPayload.append(fields.whatsapp, formData.whatsapp);
+    }
 
     try {
       await fetch(formUrl, {
@@ -117,10 +116,6 @@ export default function LandingPageRemaViva() {
     formPayload.append(fields.email, email);
     formPayload.append(fields.produto, produto);
     formPayload.append(fields.valor, valor);
-    
-    // WhatsApp: envia o valor ou 'NÃO PREENCHEU'
-    const whatsappValue = formData.whatsapp.trim() || 'NÃO PREENCHEU';
-    formPayload.append(fields.whatsapp, whatsappValue);
 
     try {
       await fetch(formUrl, {
@@ -170,7 +165,7 @@ export default function LandingPageRemaViva() {
   // Função para material PAGO
   const handleSubmitPago = async () => {
     if (!formData.nome || !formData.email || !selectedProduct) {
-      toast.error('Por favor, preencha todos os campos obrigatórios.');
+      toast.error('Por favor, preencha todos os campos.');
       return;
     }
     
@@ -330,7 +325,7 @@ export default function LandingPageRemaViva() {
                 className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center gap-2"
                 style={{ 
                   backgroundColor: COLORS.yellow,
-                    color: COLORS.black
+                  color: COLORS.black
                 }}
               >
                 <Download className="w-6 h-6" />
@@ -836,7 +831,6 @@ export default function LandingPageRemaViva() {
                   onChange={(e) => setFormData({...formData, nome: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Seu nome"
-                  required
                 />
               </div>
               <div>
@@ -847,7 +841,6 @@ export default function LandingPageRemaViva() {
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="seu@email.com"
-                  required
                 />
               </div>
               <div>
@@ -859,13 +852,10 @@ export default function LandingPageRemaViva() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="(14) 99999-9999"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Não obrigatório, mas nos ajuda a enviar novidades
-                </p>
               </div>
               <button 
                 onClick={handleSubmitGratuito}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 hover:opacity-90"
+                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2"
                 style={{ 
                   background: `linear-gradient(to right, ${COLORS.blue}, ${COLORS.green})`,
                   color: 'white'
@@ -907,7 +897,6 @@ export default function LandingPageRemaViva() {
                   onChange={(e) => setFormData({...formData, nome: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Seu nome"
-                  required
                 />
               </div>
               <div>
@@ -918,7 +907,6 @@ export default function LandingPageRemaViva() {
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="seu@email.com"
-                  required
                 />
               </div>
               <div>
@@ -930,24 +918,18 @@ export default function LandingPageRemaViva() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="(14) 99999-9999"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Não obrigatório, mas nos ajuda a enviar novidades
-                </p>
               </div>
               <div className="p-4 bg-gray-50 rounded-lg mb-4">
                 <p className="font-bold text-lg" style={{ color: COLORS.blue }}>
                   Total: {selectedProduct.price}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Produto: {selectedProduct.name}
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
                   Você será redirecionado para o Mercado Pago após enviar este formulário
                 </p>
               </div>
               <button 
                 onClick={handleSubmitPago}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 hover:opacity-90"
+                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2"
                 style={{ 
                   background: `linear-gradient(to right, ${COLORS.blue}, ${COLORS.green})`,
                   color: 'white'
