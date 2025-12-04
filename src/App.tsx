@@ -22,41 +22,38 @@ interface Testimonial {
 
 // Nova paleta de cores
 const COLORS = {
-  blue: '#2E88FF',     // Azul Esperança
-  yellow: '#FFD449',   // Amarelo Luz
-  green: '#7ACB72',    // Verde Vida
-  orange: '#FF8A42',   // Laranja Calor
-  gray: '#F4F4F4',     // Cinza Suave
-  black: '#1E1E1E',    // Preto Amável
+  blue: '#2E88FF',
+  yellow: '#FFD449',
+  green: '#7ACB72',
+  orange: '#FF8A42',
+  gray: '#F4F4F4',
+  black: '#1E1E1E',
 };
 
 // URLs DO MERCADO PAGO
 const MERCADO_PAGO_LINKS = {
-  serie1: 'https://mpago.li/1QAb8kq',     // R$ 19,90 - Série quem é Jesus? - lição 1
-  kit3: 'https://mpago.la/2AdPPmt',       // R$ 49,90 - Kit com 3 lições
+  serie1: 'https://mpago.li/1QAb8kq',
+  kit3: 'https://mpago.la/2AdPPmt',
 };
 
 // URLs DO GOOGLE FORMS
 const GOOGLE_FORMS = {
-  // LEADS GRATUITOS - https://docs.google.com/forms/d/e/1FAIpQLSfd_i6wIRpQGKwFHWfmuGpcPSe-Biay9J5T45QYRX_YpBQn4A/viewform
   gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSfd_i6wIRpQGKwFHWfmuGpcPSe-Biay9J5T45QYRX_YpBQn4A/formResponse',
-  
-  // CLIENTES PAGOS - https://docs.google.com/forms/d/e/1FAIpQLSfBN-dZWuGknTwUWrKzhg_-D5kavWCrLaFvAqwgrmOWTkDcQA/viewform
-  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSfBN-dZWuGknTwUWrKzhg_-D5kavWCrLaFvAqwgrmOWTkDcQA/formResponse'
+  pago: 'https://docs.google.comforms/d/e/1FAIpQLSfBN-dZWuGknTwUWrKzhg_-D5kavWCrLaFvAqwgrmOWTkDcQA/formResponse'
 };
 
 // IDs dos campos do Google Forms
 const FORM_FIELDS = {
   gratuito: {
-    nome: 'entry.830683209',    // Campo "Nome completo"
-    email: 'entry.1000068465',  // Campo "Email"
-    whatsapp: 'entry.1573965755' // Campo "WhatsApp"
+    nome: 'entry.830683209',
+    email: 'entry.1000068465',
+    whatsapp: 'entry.1573965755'
   },
   pago: {
-    nome: 'entry.944565967',    // Campo "Nome"
-    email: 'entry.99204833',    // Campo "Email"
-    produto: 'entry.1131324143', // Campo "Qual produto comprou?"
-    valor: 'entry.632841172'    // Campo "Valor pago"
+    nome: 'entry.944565967',
+    email: 'entry.99204833',
+    produto: 'entry.1131324143',
+    valor: 'entry.632841172'
   }
 };
 
@@ -79,25 +76,41 @@ export default function LandingPageRemaViva() {
   }, []);
 
   // Função para enviar para Google Forms (GRATUITO)
-  const submitToGoogleForms = async (formType: 'gratuito' | 'pago', additionalData?: any) => {
-    const formUrl = GOOGLE_FORMS[formType];
-    const fields = FORM_FIELDS[formType];
+  const submitToGoogleFormsGratuito = async () => {
+    const formUrl = GOOGLE_FORMS.gratuito;
+    const fields = FORM_FIELDS.gratuito;
     
     const formPayload = new FormData();
+    formPayload.append(fields.nome, formData.nome);
+    formPayload.append(fields.email, formData.email);
     
-    if (formType === 'gratuito') {
-      formPayload.append(fields.nome, formData.nome);
-      formPayload.append(fields.email, formData.email);
-      if (formData.whatsapp) {
-        formPayload.append(fields.whatsapp, formData.whatsapp);
-      }
-    } else {
-      // Para pagos - dados do cliente + info do produto
-      formPayload.append(fields.nome, additionalData.nome || 'Comprador Mercado Pago');
-      formPayload.append(fields.email, additionalData.email || 'comprador@mercadopago.com');
-      formPayload.append(fields.produto, additionalData.produto || '');
-      formPayload.append(fields.valor, additionalData.valor || '');
+    if (formData.whatsapp) {
+      formPayload.append(fields.whatsapp, formData.whatsapp);
     }
+
+    try {
+      await fetch(formUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: formPayload
+      });
+      return true;
+    } catch (error) {
+      console.error('Erro ao enviar para Google Forms:', error);
+      return false;
+    }
+  };
+
+  // Função para enviar para Google Forms (PAGO)
+  const submitToGoogleFormsPago = async (produto: string, valor: string) => {
+    const formUrl = GOOGLE_FORMS.pago;
+    const fields = FORM_FIELDS.pago;
+    
+    const formPayload = new FormData();
+    formPayload.append(fields.nome, 'Comprador Mercado Pago');
+    formPayload.append(fields.email, 'comprador@mercadopago.com');
+    formPayload.append(fields.produto, produto);
+    formPayload.append(fields.valor, valor);
 
     try {
       await fetch(formUrl, {
@@ -120,7 +133,7 @@ export default function LandingPageRemaViva() {
     }
     
     // Envia para Google Forms (GRATUITO)
-    const success = await submitToGoogleForms('gratuito');
+    const success = await submitToGoogleFormsGratuito();
     
     if (success) {
       toast.success('🎉 Obrigado! Verifique seu e-mail para baixar a lição gratuita.');
@@ -146,10 +159,7 @@ export default function LandingPageRemaViva() {
     toast.loading('Redirecionando para Mercado Pago...');
     
     // Registra tentativa de compra (opcional)
-    submitToGoogleForms('pago', {
-      produto: 'Série: Quem é Jesus? - Lição 1',
-      valor: 'R$ 19,90'
-    });
+    submitToGoogleFormsPago('Série: Quem é Jesus? - Lição 1', 'R$ 19,90');
     
     setTimeout(() => {
       toast.dismiss();
@@ -162,10 +172,7 @@ export default function LandingPageRemaViva() {
     toast.loading('Redirecionando para Mercado Pago...');
     
     // Registra tentativa de compra (opcional)
-    submitToGoogleForms('pago', {
-      produto: 'Kit Completo - 3 lições',
-      valor: 'R$ 49,90'
-    });
+    submitToGoogleFormsPago('Kit Completo - 3 lições', 'R$ 49,90');
     
     setTimeout(() => {
       toast.dismiss();
