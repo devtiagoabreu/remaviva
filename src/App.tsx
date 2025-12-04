@@ -184,18 +184,18 @@ export default function LandingPageRemaViva() {
   // Dados para renderização
   const painPoints = [
     'Passar horas pesquisando e preparando cada lição',
-    'Falta de material cristocêntrico e teologicamente sólido',
-    'Dificuldade em encontrar atividades apropriadas para cada idade',
-    'Conteúdo genérico que não reflete a doutrina reformada',
-    'Sensação de estar improvisando a cada semana'
+    'Falta de materiais bíblicos, claros e prontos para usar',
+    'Dificuldade em encontrar atividades adequadas para a faixa etária',
+    'Conteúdo raso ou genérico, que não ajuda no discipulado das crianças',
+    'Falta de tempo para montar aplicações práticas e objetivas'
   ];
 
   const solutions = [
     'Lições completas e prontas para usar imediatamente',
     'Conteúdo 100% cristocêntrico e fiel às Escrituras',
-    'Atividades pedagógicas desenvolvidas por especialistas',
-    'Alinhamento total com a teologia calvinista/presbiteriana',
-    'Materiais visuais profissionais inclusos'
+    'Atividades pedagógicas simples e práticas para cada lição',
+    'Aplicações claras que ajudam as crianças a viverem a Palavra',
+    'Materiais visuais profissionais e fáceis de apresentar'
   ];
 
   const testimonials: Testimonial[] = [
@@ -218,8 +218,8 @@ export default function LandingPageRemaViva() {
 
   const faqItems: FAQItem[] = [
     {
-      q: 'O conteúdo é mesmo fiel à teologia reformada?',
-      a: 'Sim! Todo o material é desenvolvido com base nas Escrituras e alinhado com a Confissão de Fé de Westminster e os Catecismos. Nosso compromisso é com a fidelidade bíblica e doutrinária.'
+      q: 'O conteúdo é realmente bíblico e cristocêntrico?',
+      a: 'Sim. Todo o material da Editora Rema Viva é fundamentado nas Escrituras, com foco em ensinar às crianças quem Jesus é, o que Ele fez e como elas podem viver a fé no dia a dia. Nosso compromisso é com a fidelidade bíblica e a clareza no discipulado infantil.'
     },
     {
       q: 'Como recebo o material após o pagamento?',
@@ -263,14 +263,14 @@ export default function LandingPageRemaViva() {
                     color: COLORS.black
                   }}
                 >
-                  ✨ Material Cristocêntrico e Fiel à Doutrina Reformada
+                  ✨ Materiais Bíblicos, Cristocêntricos e Confiáveis
                 </div>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Transforme a Fé dos Seus Filhos com Lições Bíblicas Inesquecíveis
+                Lições Inesquecíveis para o Ministério Infantil – Bíblica, Simples e Perfeita para as crianças.
               </h1>
               <p className="text-xl mb-8 opacity-90">
-                Conteúdo cristocêntrico e fiel à teologia calvinista, pronto para usar. Economize horas de preparação e ministre com excelência.
+                Conteúdo bíblico, cristocêntrico e fácil de aplicar. Economize horas de preparação e ensine as crianças com profundidade, clareza e simplicidade.
               </p>
               <button 
                 onClick={() => setShowFreeModal(true)}
@@ -281,7 +281,7 @@ export default function LandingPageRemaViva() {
                 }}
               >
                 <Download className="w-6 h-6" />
-                Baixe a Lição Gratuita Agora!
+                Baixe a Lição de Natal Gratuitamente!
               </button>
               <p className="text-sm mt-4 opacity-80">
                 🎁 Sem compromisso • Acesso imediato • 100% gratuito
@@ -314,21 +314,21 @@ export default function LandingPageRemaViva() {
               <Shield className="w-8 h-8" style={{ color: COLORS.blue }} />
               <div className="text-left">
                 <p className="font-bold text-gray-800">Editora Rema Viva</p>
-                <p className="text-sm text-gray-600">Fidelidade Reformada</p>
+                <p className="text-sm text-gray-600">Materiais Bíblicos e confiáveis</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <BookOpen className="w-8 h-8" style={{ color: COLORS.green }} />
               <div className="text-left">
-                <p className="font-bold text-gray-800">Teologia Calvinista</p>
-                <p className="text-sm text-gray-600">Doutrina Presbiteriana</p>
+                <p className="font-bold text-gray-800">Cristocêntrica</p>
+                <p className="text-sm text-gray-600">Focado na Palavra de Deus</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Users className="w-8 h-8" style={{ color: COLORS.orange }} />
               <div className="text-left">
                 <p className="font-bold text-gray-800">Aprovado por Líderes</p>
-                <p className="text-sm text-gray-600">Igrejas e Ministérios</p>
+                <p className="text-sm text-gray-600">Igrejas e Ministérios de todo o Brasil</p>
               </div>
             </div>
           </div>
@@ -339,10 +339,10 @@ export default function LandingPageRemaViva() {
       <section className="py-20 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-4 text-gray-800">
-            Pare de Perder Tempo Preparando Aulas
+            Tenha Aulas Bíblicas Preparadas com Clareza, Propósito e Economia de Tempo
           </h2>
           <p className="text-xl text-center text-gray-600 mb-16">
-            Você não está sozinho nestes desafios...
+            Você não está sozinho — milhares de professores enfrentam as mesmas dificuldades...
           </p>
           
           <div className="grid md:grid-cols-2 gap-8">
@@ -355,7 +355,7 @@ export default function LandingPageRemaViva() {
               }}
             >
               <h3 className="text-2xl font-bold mb-6 text-red-800 flex items-center gap-2">
-                😰 Desafios que Você Enfrenta
+                😰 Desafios que Professores e Líderes Enfrentam na Preparação de Aulas
               </h3>
               <ul className="space-y-4">
                 {painPoints.map((item, i) => (
