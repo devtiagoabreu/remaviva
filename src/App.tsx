@@ -24,7 +24,7 @@ interface Testimonial {
 const COLORS = {
   blue: '#2E88FF',
   yellow: '#FFD449',
-  green: '#7ACB72',
+  green: '##7ACB72',
   orange: '#FF8A42',
   gray: '#F4F4F4',
   black: '#1E1E1E',
@@ -59,7 +59,7 @@ const FORM_FIELDS = {
 };
 
 // LINK DO PDF GRATUITO NO GOOGLE DRIVE (SUBSTITUA PELO SEU LINK)
-const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/SEU_ID_DO_PDF/view?usp=sharing';
+const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
 export default function LandingPageRemaViva() {
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 30 });
@@ -81,57 +81,103 @@ export default function LandingPageRemaViva() {
     return () => clearInterval(timer);
   }, []);
 
-  // Função para enviar para Google Forms (GRATUITO)
+  // Função para enviar para Google Forms (GRATUITO) - CORRIGIDA
   const submitToGoogleFormsGratuito = async () => {
     const formUrl = GOOGLE_FORMS.gratuito;
     const fields = FORM_FIELDS.gratuito;
     
-    const formPayload = new FormData();
-    formPayload.append(fields.nome, formData.nome);
-    formPayload.append(fields.email, formData.email);
-    
     // WhatsApp: envia o valor ou 'NÃO PREENCHEU'
     const whatsappValue = formData.whatsapp.trim() || 'NÃO PREENCHEU';
-    formPayload.append(fields.whatsapp, whatsappValue);
+    
+    // Criar query string para enviar via GET (mais confiável)
+    const params = new URLSearchParams();
+    params.append(fields.nome, formData.nome);
+    params.append(fields.email, formData.email);
+    params.append(fields.whatsapp, whatsappValue);
 
     try {
-      await fetch(formUrl, {
+      // Usando fetch com mode: 'no-cors' e método POST
+      const response = await fetch(formUrl, {
         method: 'POST',
         mode: 'no-cors',
-        body: formPayload
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString()
       });
+      
+      // Como estamos usando no-cors, não podemos verificar a resposta
+      // Mas podemos assumir que foi enviado
+      console.log('Formulário gratuito enviado:', {
+        nome: formData.nome,
+        email: formData.email,
+        whatsapp: whatsappValue
+      });
+      
       return true;
     } catch (error) {
-      console.error('Erro ao enviar para Google Forms:', error);
-      return false;
+      console.error('Erro ao enviar para Google Forms gratuito:', error);
+      
+      // Tentar método alternativo: abrir uma nova janela com GET
+      try {
+        const getUrl = `${formUrl}?${params.toString()}`;
+        window.open(getUrl, '_blank', 'noopener,noreferrer');
+        return true;
+      } catch (fallbackError) {
+        console.error('Erro no método alternativo:', fallbackError);
+        return false;
+      }
     }
   };
 
-  // Função para enviar para Google Forms (PAGO)
+  // Função para enviar para Google Forms (PAGO) - CORRIGIDA
   const submitToGoogleFormsPago = async (produto: string, valor: string, nome: string, email: string) => {
     const formUrl = GOOGLE_FORMS.pago;
     const fields = FORM_FIELDS.pago;
     
-    const formPayload = new FormData();
-    formPayload.append(fields.nome, nome);
-    formPayload.append(fields.email, email);
-    formPayload.append(fields.produto, produto);
-    formPayload.append(fields.valor, valor);
-    
     // WhatsApp: envia o valor ou 'NÃO PREENCHEU'
     const whatsappValue = formData.whatsapp.trim() || 'NÃO PREENCHEU';
-    formPayload.append(fields.whatsapp, whatsappValue);
+    
+    // Criar query string
+    const params = new URLSearchParams();
+    params.append(fields.nome, nome);
+    params.append(fields.email, email);
+    params.append(fields.produto, produto);
+    params.append(fields.valor, valor);
+    params.append(fields.whatsapp, whatsappValue);
 
     try {
+      // Usando fetch com mode: 'no-cors'
       await fetch(formUrl, {
         method: 'POST',
         mode: 'no-cors',
-        body: formPayload
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString()
       });
+      
+      console.log('Formulário pago enviado:', {
+        nome: nome,
+        email: email,
+        produto: produto,
+        valor: valor,
+        whatsapp: whatsappValue
+      });
+      
       return true;
     } catch (error) {
-      console.error('Erro ao enviar para Google Forms:', error);
-      return false;
+      console.error('Erro ao enviar para Google Forms pago:', error);
+      
+      // Tentar método alternativo: abrir uma nova janela com GET
+      try {
+        const getUrl = `${formUrl}?${params.toString()}`;
+        window.open(getUrl, '_blank', 'noopener,noreferrer');
+        return true;
+      } catch (fallbackError) {
+        console.error('Erro no método alternativo:', fallbackError);
+        return false;
+      }
     }
   };
 
@@ -144,27 +190,26 @@ export default function LandingPageRemaViva() {
     
     // Envia para Google Forms (GRATUITO)
     toast.loading('Enviando seus dados...');
+    
+    // Primeiro, sempre tentar enviar para o Google Forms
     const success = await submitToGoogleFormsGratuito();
     
-    if (success) {
+    // Depois redirecionar para o PDF
+    setTimeout(() => {
       toast.dismiss();
-      toast.success('✅ Dados enviados! Redirecionando para o PDF...');
+      
+      if (success) {
+        toast.success('✅ Dados enviados! Redirecionando para o PDF...');
+      } else {
+        toast.success('✅ Redirecionando para o PDF...');
+      }
+      
       setShowFreeModal(false);
       setFormData({ nome: '', email: '', whatsapp: '' });
       
       // Redireciona para o PDF no Google Drive
-      setTimeout(() => {
-        window.open(PDF_GRATUITO_URL, '_blank');
-      }, 1500);
-    } else {
-      toast.dismiss();
-      toast.success('✅ Recebemos seus dados! Redirecionando para o PDF...');
-      setShowFreeModal(false);
-      // Mesmo se falhar, ainda redireciona para o PDF
-      setTimeout(() => {
-        window.open(PDF_GRATUITO_URL, '_blank');
-      }, 1500);
-    }
+      window.open(PDF_GRATUITO_URL, '_blank');
+    }, 2000);
   };
 
   // Função para material PAGO
@@ -184,31 +229,25 @@ export default function LandingPageRemaViva() {
       formData.email
     );
     
-    if (success) {
+    // Depois redirecionar para Mercado Pago
+    setTimeout(() => {
       toast.dismiss();
-      toast.success('✅ Dados enviados! Redirecionando para pagamento...');
+      
+      if (success) {
+        toast.success('✅ Dados enviados! Redirecionando para pagamento...');
+      } else {
+        toast.success('✅ Redirecionando para pagamento...');
+      }
+      
       setShowPaidModal(false);
       setFormData({ nome: '', email: '', whatsapp: '' });
       
       // Redireciona para Mercado Pago
-      setTimeout(() => {
-        const mercadoPagoLink = selectedProduct.type === 'serie1' 
-          ? MERCADO_PAGO_LINKS.serie1 
-          : MERCADO_PAGO_LINKS.kit3;
-        window.open(mercadoPagoLink, '_blank');
-      }, 1500);
-    } else {
-      toast.dismiss();
-      toast.success('✅ Dados recebidos! Redirecionando para pagamento...');
-      setShowPaidModal(false);
-      // Mesmo se falhar, redireciona para Mercado Pago
-      setTimeout(() => {
-        const mercadoPagoLink = selectedProduct.type === 'serie1' 
-          ? MERCADO_PAGO_LINKS.serie1 
-          : MERCADO_PAGO_LINKS.kit3;
-        window.open(mercadoPagoLink, '_blank');
-      }, 1500);
-    }
+      const mercadoPagoLink = selectedProduct.type === 'serie1' 
+        ? MERCADO_PAGO_LINKS.serie1 
+        : MERCADO_PAGO_LINKS.kit3;
+      window.open(mercadoPagoLink, '_blank');
+    }, 2000);
   };
 
   const toggleFaq = (index: number) => {
@@ -330,7 +369,7 @@ export default function LandingPageRemaViva() {
                 className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center gap-2"
                 style={{ 
                   backgroundColor: COLORS.yellow,
-                    color: COLORS.black
+                  color: COLORS.black
                 }}
               >
                 <Download className="w-6 h-6" />
@@ -343,7 +382,7 @@ export default function LandingPageRemaViva() {
             <div className="relative">
               <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2 hover:rotate-0 transition-transform">
                 <img 
-                  src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=500&h=600&fit=crop" 
+                  src="https://i.ibb.co/qLdP2rfy/natal.png"
                   alt="Jesus com crianças" 
                   className="rounded-lg w-full"
                 />
