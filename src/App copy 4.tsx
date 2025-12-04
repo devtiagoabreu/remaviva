@@ -39,7 +39,7 @@ const MERCADO_PAGO_LINKS = {
 // URLs DO GOOGLE FORMS
 const GOOGLE_FORMS = {
   gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSfd_i6wIRpQGKwFHWfmuGpcPSe-Biay9J5T45QYRX_YpBQn4A/formResponse',
-  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSfBN-dZWuGknTwUWrKzhg_-D5kavWCrLaFvAqwgrmOWTkDcQA/formResponse'
+  pago: 'https://docs.google.comforms/d/e/1FAIpQLSfBN-dZWuGknTwUWrKzhg_-D5kavWCrLaFvAqwgrmOWTkDcQA/formResponse'
 };
 
 // IDs dos campos do Google Forms
@@ -57,14 +57,9 @@ const FORM_FIELDS = {
   }
 };
 
-// LINK DO PDF GRATUITO NO GOOGLE DRIVE (SUBSTITUA PELO SEU LINK)
-const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/SEU_ID_DO_PDF/view?usp=sharing';
-
 export default function LandingPageRemaViva() {
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 30 });
   const [showFreeModal, setShowFreeModal] = useState(false);
-  const [showPaidModal, setShowPaidModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<{type: 'serie1' | 'kit3', name: string, price: string} | null>(null);
   const [formData, setFormData] = useState<FormData>({ nome: '', email: '', whatsapp: '' });
   const [faqOpen, setFaqOpen] = useState<Record<number, boolean>>({});
 
@@ -107,13 +102,13 @@ export default function LandingPageRemaViva() {
   };
 
   // Função para enviar para Google Forms (PAGO)
-  const submitToGoogleFormsPago = async (produto: string, valor: string, nome: string, email: string) => {
+  const submitToGoogleFormsPago = async (produto: string, valor: string) => {
     const formUrl = GOOGLE_FORMS.pago;
     const fields = FORM_FIELDS.pago;
     
     const formPayload = new FormData();
-    formPayload.append(fields.nome, nome);
-    formPayload.append(fields.email, email);
+    formPayload.append(fields.nome, 'Comprador Mercado Pago');
+    formPayload.append(fields.email, 'comprador@mercadopago.com');
     formPayload.append(fields.produto, produto);
     formPayload.append(fields.valor, valor);
 
@@ -131,78 +126,27 @@ export default function LandingPageRemaViva() {
   };
 
   // Função para material GRATUITO
-  const handleSubmitGratuito = async () => {
+  const handleSubmit = async () => {
     if (!formData.nome || !formData.email) {
       toast.error('Por favor, preencha os campos obrigatórios.');
       return;
     }
     
     // Envia para Google Forms (GRATUITO)
-    toast.loading('Enviando seus dados...');
     const success = await submitToGoogleFormsGratuito();
     
     if (success) {
-      toast.dismiss();
-      toast.success('✅ Dados enviados! Redirecionando para o PDF...');
+      toast.success('🎉 Obrigado! Verifique seu e-mail para baixar a lição gratuita.');
       setShowFreeModal(false);
       setFormData({ nome: '', email: '', whatsapp: '' });
       
-      // Redireciona para o PDF no Google Drive
+      // Redireciona para página de obrigado ou download
       setTimeout(() => {
-        window.open(PDF_GRATUITO_URL, '_blank');
-      }, 1500);
+        window.open('https://drive.google.com/SEU_LINK_DO_PDF_GRATUITO', '_blank');
+      }, 1000);
     } else {
-      toast.dismiss();
-      toast.success('✅ Recebemos seus dados! Redirecionando para o PDF...');
+      toast.success('✅ Recebemos seus dados! Você receberá o material em breve.');
       setShowFreeModal(false);
-      // Mesmo se falhar, ainda redireciona para o PDF
-      setTimeout(() => {
-        window.open(PDF_GRATUITO_URL, '_blank');
-      }, 1500);
-    }
-  };
-
-  // Função para material PAGO
-  const handleSubmitPago = async () => {
-    if (!formData.nome || !formData.email || !selectedProduct) {
-      toast.error('Por favor, preencha todos os campos.');
-      return;
-    }
-    
-    toast.loading('Enviando seus dados...');
-    
-    // Envia para Google Forms (PAGO)
-    const success = await submitToGoogleFormsPago(
-      selectedProduct.name,
-      selectedProduct.price,
-      formData.nome,
-      formData.email
-    );
-    
-    if (success) {
-      toast.dismiss();
-      toast.success('✅ Dados enviados! Redirecionando para pagamento...');
-      setShowPaidModal(false);
-      setFormData({ nome: '', email: '', whatsapp: '' });
-      
-      // Redireciona para Mercado Pago
-      setTimeout(() => {
-        const mercadoPagoLink = selectedProduct.type === 'serie1' 
-          ? MERCADO_PAGO_LINKS.serie1 
-          : MERCADO_PAGO_LINKS.kit3;
-        window.open(mercadoPagoLink, '_blank');
-      }, 1500);
-    } else {
-      toast.dismiss();
-      toast.success('✅ Dados recebidos! Redirecionando para pagamento...');
-      setShowPaidModal(false);
-      // Mesmo se falhar, redireciona para Mercado Pago
-      setTimeout(() => {
-        const mercadoPagoLink = selectedProduct.type === 'serie1' 
-          ? MERCADO_PAGO_LINKS.serie1 
-          : MERCADO_PAGO_LINKS.kit3;
-        window.open(mercadoPagoLink, '_blank');
-      }, 1500);
     }
   };
 
@@ -210,23 +154,31 @@ export default function LandingPageRemaViva() {
     setFaqOpen(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
-  // Funções para abrir modais PAGOS (com formulário primeiro)
-  const openSerie1Modal = () => {
-    setSelectedProduct({
-      type: 'serie1',
-      name: 'Série: Quem é Jesus? - Lição 1',
-      price: 'R$ 19,90'
-    });
-    setShowPaidModal(true);
+  // Funções para MERCADO PAGO
+  const handleSerie1 = () => {
+    toast.loading('Redirecionando para Mercado Pago...');
+    
+    // Registra tentativa de compra (opcional)
+    submitToGoogleFormsPago('Série: Quem é Jesus? - Lição 1', 'R$ 19,90');
+    
+    setTimeout(() => {
+      toast.dismiss();
+      window.open(MERCADO_PAGO_LINKS.serie1, '_blank');
+      toast.success('Abrindo checkout do Mercado Pago!');
+    }, 1500);
   };
 
-  const openKit3Modal = () => {
-    setSelectedProduct({
-      type: 'kit3',
-      name: 'Kit Completo - 3 lições',
-      price: 'R$ 49,90'
-    });
-    setShowPaidModal(true);
+  const handleKit3 = () => {
+    toast.loading('Redirecionando para Mercado Pago...');
+    
+    // Registra tentativa de compra (opcional)
+    submitToGoogleFormsPago('Kit Completo - 3 lições', 'R$ 49,90');
+    
+    setTimeout(() => {
+      toast.dismiss();
+      window.open(MERCADO_PAGO_LINKS.kit3, '_blank');
+      toast.success('Abrindo checkout do Mercado Pago!');
+    }, 1500);
   };
 
   // Dados para renderização
@@ -575,7 +527,7 @@ export default function LandingPageRemaViva() {
               </div>
               <div className="mt-auto">
                 <button 
-                  onClick={openSerie1Modal}
+                  onClick={handleSerie1}
                   className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
                   style={{ 
                     backgroundColor: COLORS.blue,
@@ -636,7 +588,7 @@ export default function LandingPageRemaViva() {
               </div>
               <div className="mt-auto">
                 <button 
-                  onClick={openKit3Modal}
+                  onClick={handleKit3}
                   className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
                   style={{ 
                     backgroundColor: COLORS.yellow,
@@ -820,7 +772,7 @@ export default function LandingPageRemaViva() {
               🎁 Receba Sua Lição Gratuita
             </h3>
             <p className="text-gray-600 mb-6">
-              Preencha os dados abaixo para acessar o PDF gratuito:
+              Preencha os dados abaixo e receba imediatamente em seu e-mail:
             </p>
             <div className="space-y-4">
               <div>
@@ -854,7 +806,7 @@ export default function LandingPageRemaViva() {
                 />
               </div>
               <button 
-                onClick={handleSubmitGratuito}
+                onClick={handleSubmit}
                 className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2"
                 style={{ 
                   background: `linear-gradient(to right, ${COLORS.blue}, ${COLORS.green})`,
@@ -862,84 +814,10 @@ export default function LandingPageRemaViva() {
                 }}
               >
                 <Download className="w-5 h-5" />
-                Enviar e Acessar PDF Grátis
+                Enviar e Receber Material Grátis
               </button>
               <p className="text-xs text-gray-500 text-center">
                 Seus dados estão seguros. Não compartilhamos com terceiros.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Material Pago */}
-      {showPaidModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowPaidModal(false)}>
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 relative" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={() => setShowPaidModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
-            >
-              ✕
-            </button>
-            <h3 className="text-2xl font-bold mb-4 text-gray-800">
-              🛒 Finalizar Compra - {selectedProduct.name}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Preencha seus dados para prosseguir com a compra:
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Nome Completo *</label>
-                <input 
-                  type="text"
-                  value={formData.nome}
-                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Seu nome"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">E-mail *</label>
-                <input 
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="seu@email.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">WhatsApp (opcional)</label>
-                <input 
-                  type="tel"
-                  value={formData.whatsapp}
-                  onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="(14) 99999-9999"
-                />
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg mb-4">
-                <p className="font-bold text-lg" style={{ color: COLORS.blue }}>
-                  Total: {selectedProduct.price}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Você será redirecionado para o Mercado Pago após enviar este formulário
-                </p>
-              </div>
-              <button 
-                onClick={handleSubmitPago}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2"
-                style={{ 
-                  background: `linear-gradient(to right, ${COLORS.blue}, ${COLORS.green})`,
-                  color: 'white'
-                }}
-              >
-                <CreditCard className="w-5 h-5" />
-                Enviar e Ir para Pagamento
-              </button>
-              <p className="text-xs text-gray-500 text-center">
-                Pagamento seguro via Mercado Pago. Seus dados estão protegidos.
               </p>
             </div>
           </div>
