@@ -30,14 +30,37 @@ const COLORS = {
   black: '#1E1E1E',    // Preto Amável
 };
 
-// URLs DO MERCADO PAGO (SEUS LINKS)
+// URLs DO MERCADO PAGO
 const MERCADO_PAGO_LINKS = {
   serie1: 'https://mpago.li/1QAb8kq',     // R$ 19,90 - Série quem é Jesus? - lição 1
   kit3: 'https://mpago.la/2AdPPmt',       // R$ 49,90 - Kit com 3 lições
 };
 
+// URLs DO GOOGLE FORMS
+const GOOGLE_FORMS = {
+  // LEADS GRATUITOS - https://docs.google.com/forms/d/e/1FAIpQLSfd_i6wIRpQGKwFHWfmuGpcPSe-Biay9J5T45QYRX_YpBQn4A/viewform
+  gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSfd_i6wIRpQGKwFHWfmuGpcPSe-Biay9J5T45QYRX_YpBQn4A/formResponse',
+  
+  // CLIENTES PAGOS - https://docs.google.com/forms/d/e/1FAIpQLSfBN-dZWuGknTwUWrKzhg_-D5kavWCrLaFvAqwgrmOWTkDcQA/viewform
+  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSfBN-dZWuGknTwUWrKzhg_-D5kavWCrLaFvAqwgrmOWTkDcQA/formResponse'
+};
+
+// IDs dos campos do Google Forms
+const FORM_FIELDS = {
+  gratuito: {
+    nome: 'entry.830683209',    // Campo "Nome completo"
+    email: 'entry.1000068465',  // Campo "Email"
+    whatsapp: 'entry.1573965755' // Campo "WhatsApp"
+  },
+  pago: {
+    nome: 'entry.944565967',    // Campo "Nome"
+    email: 'entry.99204833',    // Campo "Email"
+    produto: 'entry.1131324143', // Campo "Qual produto comprou?"
+    valor: 'entry.632841172'    // Campo "Valor pago"
+  }
+};
+
 export default function LandingPageRemaViva() {
-  // Estados com tipos explícitos
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 30 });
   const [showFreeModal, setShowFreeModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({ nome: '', email: '', whatsapp: '' });
@@ -55,35 +78,63 @@ export default function LandingPageRemaViva() {
     return () => clearInterval(timer);
   }, []);
 
+  // Função para enviar para Google Forms (GRATUITO)
+  const submitToGoogleForms = async (formType: 'gratuito' | 'pago', additionalData?: any) => {
+    const formUrl = GOOGLE_FORMS[formType];
+    const fields = FORM_FIELDS[formType];
+    
+    const formPayload = new FormData();
+    
+    if (formType === 'gratuito') {
+      formPayload.append(fields.nome, formData.nome);
+      formPayload.append(fields.email, formData.email);
+      if (formData.whatsapp) {
+        formPayload.append(fields.whatsapp, formData.whatsapp);
+      }
+    } else {
+      // Para pagos - dados do cliente + info do produto
+      formPayload.append(fields.nome, additionalData.nome || 'Comprador Mercado Pago');
+      formPayload.append(fields.email, additionalData.email || 'comprador@mercadopago.com');
+      formPayload.append(fields.produto, additionalData.produto || '');
+      formPayload.append(fields.valor, additionalData.valor || '');
+    }
+
+    try {
+      await fetch(formUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: formPayload
+      });
+      return true;
+    } catch (error) {
+      console.error('Erro ao enviar para Google Forms:', error);
+      return false;
+    }
+  };
+
   // Função para material GRATUITO
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.nome || !formData.email) {
       toast.error('Por favor, preencha os campos obrigatórios.');
       return;
     }
     
-    // CONFIGURAÇÃO DO SEU GOOGLE FORMS
-    const GOOGLE_FORM_URL = 'https://docs.google.com/forms/u/0/d/e/FORM_ID/formResponse';
+    // Envia para Google Forms (GRATUITO)
+    const success = await submitToGoogleForms('gratuito');
     
-    const form = new FormData();
-    form.append('entry.1234567890', formData.nome);
-    form.append('entry.0987654321', formData.email);
-    if (formData.whatsapp) {
-      form.append('entry.1357924680', formData.whatsapp);
-    }
-
-    fetch(GOOGLE_FORM_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      body: form
-    }).then(() => {
+    if (success) {
       toast.success('🎉 Obrigado! Verifique seu e-mail para baixar a lição gratuita.');
       setShowFreeModal(false);
       setFormData({ nome: '', email: '', whatsapp: '' });
-    }).catch(() => {
+      
+      // Redireciona para página de obrigado ou download
+      setTimeout(() => {
+        window.open('https://drive.google.com/SEU_LINK_DO_PDF_GRATUITO', '_blank');
+      }, 1000);
+    } else {
       toast.success('✅ Recebemos seus dados! Você receberá o material em breve.');
       setShowFreeModal(false);
-    });
+    }
   };
 
   const toggleFaq = (index: number) => {
@@ -93,6 +144,13 @@ export default function LandingPageRemaViva() {
   // Funções para MERCADO PAGO
   const handleSerie1 = () => {
     toast.loading('Redirecionando para Mercado Pago...');
+    
+    // Registra tentativa de compra (opcional)
+    submitToGoogleForms('pago', {
+      produto: 'Série: Quem é Jesus? - Lição 1',
+      valor: 'R$ 19,90'
+    });
+    
     setTimeout(() => {
       toast.dismiss();
       window.open(MERCADO_PAGO_LINKS.serie1, '_blank');
@@ -102,6 +160,13 @@ export default function LandingPageRemaViva() {
 
   const handleKit3 = () => {
     toast.loading('Redirecionando para Mercado Pago...');
+    
+    // Registra tentativa de compra (opcional)
+    submitToGoogleForms('pago', {
+      produto: 'Kit Completo - 3 lições',
+      valor: 'R$ 49,90'
+    });
+    
     setTimeout(() => {
       toast.dismiss();
       window.open(MERCADO_PAGO_LINKS.kit3, '_blank');
@@ -173,7 +238,7 @@ export default function LandingPageRemaViva() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Hero Section - EXATAMENTE IGUAL AO ORIGINAL, mas com novas cores */}
+      {/* Hero Section */}
       <header 
         className="text-white"
         style={{ 
@@ -234,7 +299,7 @@ export default function LandingPageRemaViva() {
         </div>
       </header>
 
-      {/* Autoridade - MESMA SEÇÃO */}
+      {/* Autoridade */}
       <section className="bg-white py-8 border-y border-gray-200">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-center">
@@ -263,7 +328,7 @@ export default function LandingPageRemaViva() {
         </div>
       </section>
 
-      {/* Dores vs Soluções - MESMA SEÇÃO */}
+      {/* Dores vs Soluções */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-4 text-gray-800">
@@ -319,7 +384,7 @@ export default function LandingPageRemaViva() {
         </div>
       </section>
 
-      {/* Oferta Principal - ATUALIZADA COM NOVOS PREÇOS */}
+      {/* Oferta Principal - COM BOTÕES ALINHADOS */}
       <section 
         className="py-20 text-white"
         id="assinatura"
@@ -389,79 +454,87 @@ export default function LandingPageRemaViva() {
             </div>
           </div>
 
-          {/* Produtos - 3 OPÇÕES */}
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          {/* Produtos - COM BOTÕES ALINHADOS NA MESMA ALTURA */}
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
             {/* GRATUITO */}
-            <div className="bg-white text-gray-800 rounded-2xl p-8 shadow-2xl">
-              <h3 className="text-2xl font-bold mb-4">Material Gratuito</h3>
-              <div className="mb-6">
-                <span className="text-5xl font-bold" style={{ color: COLORS.green }}>R$ 0</span>
-                <span className="text-gray-600">/grátis</span>
+            <div className="bg-white text-gray-800 rounded-2xl p-8 shadow-2xl flex flex-col">
+              <div className="flex-grow">
+                <h3 className="text-2xl font-bold mb-4">Material Gratuito</h3>
+                <div className="mb-6">
+                  <span className="text-5xl font-bold" style={{ color: COLORS.green }}>R$ 0</span>
+                  <span className="text-gray-600">/grátis</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    'Lição amostra da série',
+                    'Atividades básicas incluídas',
+                    'Acesso imediato após cadastro',
+                    'Sem necessidade de pagamento'
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check className="w-5 h-5" style={{ color: COLORS.green }} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  'Lição amostra da série',
-                  'Atividades básicas incluídas',
-                  'Acesso imediato após cadastro',
-                  'Sem necessidade de pagamento'
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <Check className="w-5 h-5" style={{ color: COLORS.green }} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <button 
-                onClick={() => setShowFreeModal(true)}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
-                style={{ 
-                  backgroundColor: COLORS.blue,
-                  color: 'white'
-                }}
-              >
-                <Download className="w-5 h-5" />
-                Baixar Grátis
-              </button>
+              <div className="mt-auto">
+                <button 
+                  onClick={() => setShowFreeModal(true)}
+                  className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
+                  style={{ 
+                    backgroundColor: COLORS.blue,
+                    color: 'white'
+                  }}
+                >
+                  <Download className="w-5 h-5" />
+                  Baixar Grátis
+                </button>
+              </div>
             </div>
 
             {/* SÉRIE 1 - R$ 19,90 */}
-            <div className="bg-white text-gray-800 rounded-2xl p-8 shadow-2xl">
-              <h3 className="text-2xl font-bold mb-4">Série: Quem é Jesus?</h3>
-              <p className="text-gray-600 mb-2">Lição 1 - Jesus: Filho de Deus</p>
-              <div className="mb-6">
-                <span className="text-5xl font-bold" style={{ color: COLORS.blue }}>R$ 19,90</span>
-                <span className="text-gray-600">/único</span>
+            <div className="bg-white text-gray-800 rounded-2xl p-8 shadow-2xl flex flex-col">
+              <div className="flex-grow">
+                <h3 className="text-2xl font-bold mb-4">Série: Quem é Jesus?</h3>
+                <p className="text-gray-600 mb-2">Lição 1 - Jesus: Filho de Deus</p>
+                <div className="mb-6">
+                  <span className="text-5xl font-bold" style={{ color: COLORS.blue }}>R$ 19,90</span>
+                  <span className="text-gray-600">/único</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    'Lição completa em PDF',
+                    'Guia do professor detalhado',
+                    'Atividades extras inclusas',
+                    'Acesso vitalício',
+                    'Material para imprimir',
+                    '100% cristocêntrico'
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check className="w-5 h-5" style={{ color: COLORS.blue }} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  'Lição completa em PDF',
-                  'Guia do professor detalhado',
-                  'Atividades extras inclusas',
-                  'Acesso vitalício',
-                  'Material para imprimir',
-                  '100% cristocêntrico'
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <Check className="w-5 h-5" style={{ color: COLORS.blue }} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <button 
-                onClick={handleSerie1}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
-                style={{ 
-                  backgroundColor: COLORS.blue,
-                  color: 'white'
-                }}
-              >
-                <CreditCard className="w-5 h-5" />
-                Comprar Agora R$ 19,90
-              </button>
+              <div className="mt-auto">
+                <button 
+                  onClick={handleSerie1}
+                  className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
+                  style={{ 
+                    backgroundColor: COLORS.blue,
+                    color: 'white'
+                  }}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  Comprar Agora R$ 19,90
+                </button>
+              </div>
             </div>
 
             {/* KIT 3 LIÇÕES - R$ 49,90 */}
-            <div className="rounded-2xl p-8 shadow-2xl relative border-4"
+            <div className="rounded-2xl p-8 shadow-2xl relative border-4 flex flex-col"
               style={{ 
                 background: `linear-gradient(to bottom right, ${COLORS.green}, ${COLORS.blue})`,
                 color: 'white',
@@ -477,44 +550,48 @@ export default function LandingPageRemaViva() {
               >
                 🎉 MELHOR OFERTA
               </div>
-              <h3 className="text-2xl font-bold mb-4 mt-4">Kit Completo</h3>
-              <p className="opacity-90 mb-2">3 primeiras lições da série</p>
-              <div className="mb-2">
-                <span className="opacity-70 line-through text-xl">R$ 59,70</span>
-              </div>
-              <div className="mb-6">
-                <span className="text-5xl font-bold">R$ 49,90</span>
-                <span className="opacity-90">/kit completo</span>
-                <div className="font-bold mt-2" style={{ color: COLORS.yellow }}>
-                  Economize R$ 9,80 (16% OFF)
+              <div className="flex-grow">
+                <h3 className="text-2xl font-bold mb-4 mt-4">Kit Completo</h3>
+                <p className="opacity-90 mb-2">3 primeiras lições da série</p>
+                <div className="mb-2">
+                  <span className="opacity-70 line-through text-xl">R$ 59,70</span>
                 </div>
+                <div className="mb-6">
+                  <span className="text-5xl font-bold">R$ 49,90</span>
+                  <span className="opacity-90">/kit completo</span>
+                  <div className="font-bold mt-2" style={{ color: COLORS.yellow }}>
+                    Economize R$ 9,80 (16% OFF)
+                  </div>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    '3 lições completas da série',
+                    'Todos os guias do professor',
+                    'Atividades extras exclusivas',
+                    'Materiais visuais profissionais',
+                    'Acesso vitalício a tudo',
+                    'Bônus: plano de aulas'
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check className="w-5 h-5" style={{ color: COLORS.yellow }} />
+                      <span className="font-medium">{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  '3 lições completas da série',
-                  'Todos os guias do professor',
-                  'Atividades extras exclusivas',
-                  'Materiais visuais profissionais',
-                  'Acesso vitalício a tudo',
-                  'Bônus: plano de aulas'
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <Check className="w-5 h-5" style={{ color: COLORS.yellow }} />
-                    <span className="font-medium">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <button 
-                onClick={handleKit3}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
-                style={{ 
-                  backgroundColor: COLORS.yellow,
-                  color: COLORS.black
-                }}
-              >
-                <Target className="w-5 h-5" />
-                Comprar Kit R$ 49,90
-              </button>
+              <div className="mt-auto">
+                <button 
+                  onClick={handleKit3}
+                  className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
+                  style={{ 
+                    backgroundColor: COLORS.yellow,
+                    color: COLORS.black
+                  }}
+                >
+                  <Target className="w-5 h-5" />
+                  Comprar Kit R$ 49,90
+                </button>
+              </div>
             </div>
           </div>
 
@@ -536,7 +613,7 @@ export default function LandingPageRemaViva() {
         </div>
       </section>
 
-      {/* Prova Social - MESMA SEÇÃO */}
+      {/* Prova Social */}
       <section className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-4 text-gray-800">
@@ -565,7 +642,7 @@ export default function LandingPageRemaViva() {
         </div>
       </section>
 
-      {/* FAQ - MESMA SEÇÃO */}
+      {/* FAQ */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12 text-gray-800">
@@ -593,7 +670,7 @@ export default function LandingPageRemaViva() {
         </div>
       </section>
 
-      {/* CTA Final - MESMA SEÇÃO */}
+      {/* CTA Final */}
       <section 
         className="py-20 text-white"
         style={{ 
@@ -632,7 +709,7 @@ export default function LandingPageRemaViva() {
         </div>
       </section>
 
-      {/* Footer - MESMA SEÇÃO */}
+      {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
@@ -674,7 +751,7 @@ export default function LandingPageRemaViva() {
         </div>
       </footer>
 
-      {/* Modal Material Gratuito - MESMA SEÇÃO */}
+      {/* Modal Material Gratuito */}
       {showFreeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowFreeModal(false)}>
           <div className="bg-white rounded-2xl max-w-md w-full p-8 relative" onClick={(e) => e.stopPropagation()}>
