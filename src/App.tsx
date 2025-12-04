@@ -605,7 +605,7 @@ export default function LandingPageRemaViva() {
           <div className="text-center mt-12">
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <img 
-                src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.18.9/mercadopago/logo__large_plus.png" 
+                src="https://logodownload.org/wp-content/uploads/2019/06/mercado-pago-logo-8.png" 
                 alt="Mercado Pago" 
                 className="h-8"
               />
