@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail, Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock, Book, Sparkle, Zap, ShoppingCart, DollarSign, FileText, Package } from 'lucide-react';
+import { Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail, Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+// Definição de tipos TypeScript
 interface FormData {
   nome: string;
   email: string;
-  telefone: string;
+  whatsapp: string;
 }
 
 interface FAQItem {
@@ -19,25 +20,27 @@ interface Testimonial {
   text: string;
 }
 
+// Nova paleta de cores
 const COLORS = {
-  blue: '#2E88FF',
-  yellow: '#FFD449',
-  green: '#7ACB72',
-  orange: '#FF8A42',
-  gray: '#F4F4F4',
-  black: '#1E1E1E',
+  blue: '#2E88FF',     // Azul Esperança
+  yellow: '#FFD449',   // Amarelo Luz
+  green: '#7ACB72',    // Verde Vida
+  orange: '#FF8A42',   // Laranja Calor
+  gray: '#F4F4F4',     // Cinza Suave
+  black: '#1E1E1E',    // Preto Amável
 };
 
-// URLs ATUALIZADAS COM SEUS LINKS REAIS
+// URLs DO MERCADO PAGO (SEUS LINKS)
 const MERCADO_PAGO_LINKS = {
-  serie1: 'https://mpago.li/1QAb8kq',     // Série 1: R$ 19,90
-  kit3: 'https://mpago.la/2AdPPmt',       // Kit 3 lições: R$ 49,90
+  serie1: 'https://mpago.li/1QAb8kq',     // R$ 19,90 - Série quem é Jesus? - lição 1
+  kit3: 'https://mpago.la/2AdPPmt',       // R$ 49,90 - Kit com 3 lições
 };
 
 export default function LandingPageRemaViva() {
+  // Estados com tipos explícitos
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 30 });
   const [showFreeModal, setShowFreeModal] = useState(false);
-  const [formData, setFormData] = useState<FormData>({ nome: '', email: '', telefone: '' });
+  const [formData, setFormData] = useState<FormData>({ nome: '', email: '', whatsapp: '' });
   const [faqOpen, setFaqOpen] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
@@ -52,100 +55,61 @@ export default function LandingPageRemaViva() {
     return () => clearInterval(timer);
   }, []);
 
-  // FUNÇÃO PARA MATERIAL GRATUITO (Google Forms)
-  const handleFreeSubmit = async () => {
+  // Função para material GRATUITO
+  const handleSubmit = () => {
     if (!formData.nome || !formData.email) {
       toast.error('Por favor, preencha os campos obrigatórios.');
       return;
     }
     
-    // CONFIGURAÇÃO DO SEU GOOGLE FORMS (GRATUITO)
+    // CONFIGURAÇÃO DO SEU GOOGLE FORMS
     const GOOGLE_FORM_URL = 'https://docs.google.com/forms/u/0/d/e/FORM_ID/formResponse';
     
-    const formPayload = new FormData();
-    formPayload.append('entry.1234567890', formData.nome);    // Nome
-    formPayload.append('entry.0987654321', formData.email);   // Email
-    if (formData.telefone) {
-      formPayload.append('entry.1357924680', formData.telefone); // Telefone
+    const form = new FormData();
+    form.append('entry.1234567890', formData.nome);
+    form.append('entry.0987654321', formData.email);
+    if (formData.whatsapp) {
+      form.append('entry.1357924680', formData.whatsapp);
     }
 
-    try {
-      // Envia para Google Forms
-      await fetch(GOOGLE_FORM_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: formPayload
-      });
-
-      // AQUI VOCÊ PODE INTEGRAR COM EMAIL AUTOMÁTICO DEPOIS
-      // Por enquanto, apenas mostra sucesso
+    fetch(GOOGLE_FORM_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: form
+    }).then(() => {
       toast.success('🎉 Obrigado! Verifique seu e-mail para baixar a lição gratuita.');
-      
-      // Redireciona para página de obrigado ou download
-      setTimeout(() => {
-        window.open('https://drive.google.com/SEU_LINK_DO_PDF_AQUI', '_blank');
-      }, 1500);
-      
       setShowFreeModal(false);
-      setFormData({ nome: '', email: '', telefone: '' });
-      
-    } catch (error) {
+      setFormData({ nome: '', email: '', whatsapp: '' });
+    }).catch(() => {
       toast.success('✅ Recebemos seus dados! Você receberá o material em breve.');
       setShowFreeModal(false);
-    }
-  };
-
-  const toggleFaq = (index: number) => {
-    setFaqOpen(prev => {
-      const newState = { ...prev };
-      newState[index] = !prev[index];
-      return newState;
     });
   };
 
-  // FUNÇÕES PARA PAGAMENTOS
+  const toggleFaq = (index: number) => {
+    setFaqOpen(prev => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  // Funções para MERCADO PAGO
   const handleSerie1 = () => {
-    toast.loading('Abrindo checkout do Mercado Pago...');
-    
-    // Abre o link do Mercado Pago em nova aba
-    window.open(MERCADO_PAGO_LINKS.serie1, '_blank');
-    
-    // MOSTRA AVISO IMPORTANTE
+    toast.loading('Redirecionando para Mercado Pago...');
     setTimeout(() => {
       toast.dismiss();
-      toast.success(
-        <div>
-          <p>✅ Redirecionado para Mercado Pago!</p>
-          <p className="text-sm">Após o pagamento, você receberá o acesso por email.</p>
-        </div>,
-        { duration: 5000 }
-      );
-    }, 1000);
+      window.open(MERCADO_PAGO_LINKS.serie1, '_blank');
+      toast.success('Abrindo checkout do Mercado Pago!');
+    }, 1500);
   };
 
   const handleKit3 = () => {
-    toast.loading('Abrindo checkout do Mercado Pago...');
-    
-    window.open(MERCADO_PAGO_LINKS.kit3, '_blank');
-    
+    toast.loading('Redirecionando para Mercado Pago...');
     setTimeout(() => {
       toast.dismiss();
-      toast.success(
-        <div>
-          <p>✅ Redirecionado para Mercado Pago!</p>
-          <p className="text-sm">Após o pagamento, você receberá o acesso por email.</p>
-        </div>,
-        { duration: 5000 }
-      );
-    }, 1000);
+      window.open(MERCADO_PAGO_LINKS.kit3, '_blank');
+      toast.success('Abrindo checkout do Mercado Pago!');
+    }, 1500);
   };
 
-  // Adicionando FAQ sobre o processo
-  const processFaq = {
-    q: 'Como recebo o material após o pagamento?',
-    a: 'Imediatamente após a confirmação do pagamento pelo Mercado Pago, você receberá um email com os links de download. O processo é automático e leva apenas alguns minutos. Caso não receba, entre em contato conosco.'
-  };
-
+  // Dados para renderização
   const painPoints = [
     'Passar horas pesquisando e preparando cada lição',
     'Falta de material cristocêntrico e teologicamente sólido',
@@ -185,117 +149,83 @@ export default function LandingPageRemaViva() {
       q: 'O conteúdo é mesmo fiel à teologia reformada?',
       a: 'Sim! Todo o material é desenvolvido com base nas Escrituras e alinhado com a Confissão de Fé de Westminster e os Catecismos. Nosso compromisso é com a fidelidade bíblica e doutrinária.'
     },
-    processFaq,
     {
-      q: 'Posso usar os materiais na minha igreja?',
-      a: 'Sim! Os materiais podem ser usados livremente em igrejas, escolas bíblicas e ministérios cristãos. Você pode imprimir quantas cópias precisar para seu ministério.'
+      q: 'Como recebo o material após o pagamento?',
+      a: 'Imediatamente após a confirmação do pagamento pelo Mercado Pago, você receberá um email com os links de download. O processo é automático e leva apenas alguns minutos.'
     },
     {
-      q: 'Qual a diferença entre o material gratuito e pago?',
-      a: 'O material gratuito é uma amostra da qualidade do nosso conteúdo. Os materiais pagos são lições completas com atividades, guias do professor e materiais visuais profissionais.'
-    },
-    {
-      q: 'Como funciona o pagamento?',
-      a: 'Usamos o Mercado Pago, plataforma 100% segura. Aceitamos cartão (até 12x), PIX ou boleto. Após a confirmação do pagamento, o acesso é liberado automaticamente.'
+      q: 'Posso cancelar a assinatura quando quiser?',
+      a: 'Não há assinatura! Você compra uma vez e tem acesso vitalício ao material. Não há cobranças recorrentes.'
     },
     {
       q: 'Os materiais são para qual faixa etária?',
       a: 'Oferecemos conteúdo segmentado por faixas etárias: Maternal (3-6 anos), Júnior (7-10 anos) e Adolescentes (11-14 anos), com abordagens pedagógicas adequadas.'
+    },
+    {
+      q: 'Como acesso os materiais após a compra?',
+      a: 'Imediatamente após a confirmação do pagamento, você recebe acesso ao material para download e impressão.'
+    },
+    {
+      q: 'Posso usar os materiais na minha igreja?',
+      a: 'Sim! Os materiais podem ser usados livremente em igrejas, escolas bíblicas e ministérios cristãos. Você pode imprimir quantas cópias precisar para seu ministério.'
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F4F4F4] to-white">
-      {/* Hero Section */}
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      {/* Hero Section - EXATAMENTE IGUAL AO ORIGINAL, mas com novas cores */}
       <header 
-        className="text-white relative overflow-hidden"
+        className="text-white"
         style={{ 
-          background: `linear-gradient(135deg, ${COLORS.blue} 0%, ${COLORS.green} 100%)`
+          background: `linear-gradient(to right, ${COLORS.blue}, ${COLORS.green})`
         }}
       >
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-40 h-40 rounded-full bg-white"></div>
-          <div className="absolute bottom-10 right-10 w-60 h-60 rounded-full bg-white"></div>
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 py-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div 
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4"
-                style={{ 
-                  backgroundColor: `${COLORS.yellow}20`, 
-                  color: COLORS.yellow,
-                  backdropFilter: 'blur(10px)'
-                }}
-              >
-                <Sparkle className="w-4 h-4" />
-                Material Cristocêntrico e Fiel à Doutrina Reformada
-              </div>
-              
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                Transforme a Fé das Crianças com Lições Bíblicas{' '}
-                <span style={{ color: COLORS.yellow }}>Inesquecíveis</span>
-              </h1>
-              
-              <p className="text-xl opacity-90">
-                Conteúdo cristocêntrico e fiel à teologia calvinista. 
-                <span className="font-bold" style={{ color: COLORS.yellow }}> Baixe grátis</span> a primeira lição ou adquira o material completo.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <button 
-                  onClick={() => setShowFreeModal(true)}
-                  className="px-8 py-4 rounded-lg text-xl font-bold transition-all transform hover:scale-105 shadow-2xl flex items-center gap-2"
+        <div className="max-w-6xl mx-auto px-4 py-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="mb-6">
+                <div 
+                  className="inline-block px-4 py-2 rounded-full text-sm font-bold mb-4"
                   style={{ 
                     backgroundColor: COLORS.yellow,
                     color: COLORS.black
                   }}
                 >
-                  <Download className="w-6 h-6" />
-                  Baixe a Lição Gratuita
-                </button>
-                
-                <a 
-                  href="#produtos" 
-                  className="px-8 py-4 rounded-lg text-xl font-bold border-2 transition-all transform hover:scale-105 flex items-center gap-2"
-                  style={{ 
-                    borderColor: 'white',
-                    color: 'white',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
-                  }}
-                >
-                  <Book className="w-6 h-6" />
-                  Ver Produtos
-                </a>
+                  ✨ Material Cristocêntrico e Fiel à Doutrina Reformada
+                </div>
               </div>
-              
-              <div className="text-sm opacity-80 space-y-1">
-                <p>🎁 <span className="font-bold">Grátis:</span> Lição amostra + Newsletter</p>
-                <p>💎 <span className="font-bold">Pago:</span> Lições completas + Materiais extras</p>
-              </div>
-            </div>
-            
-            <div className="relative">
-              <div 
-                className="rounded-2xl p-2 transform rotate-1 hover:rotate-0 transition-transform duration-500"
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                Transforme a Fé dos Seus Filhos com Lições Bíblicas Inesquecíveis
+              </h1>
+              <p className="text-xl mb-8 opacity-90">
+                Conteúdo cristocêntrico e fiel à teologia calvinista, pronto para usar. Economize horas de preparação e ministre com excelência.
+              </p>
+              <button 
+                onClick={() => setShowFreeModal(true)}
+                className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center gap-2"
                 style={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(10px)'
+                  backgroundColor: COLORS.yellow,
+                  color: COLORS.black
                 }}
               >
-                <div className="bg-white rounded-xl overflow-hidden shadow-2xl">
-                  <img 
-                    src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&h=600&fit=crop&crop=face" 
-                    alt="Jesus ensinando crianças" 
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
+                <Download className="w-6 h-6" />
+                Baixe a Lição Gratuita Agora!
+              </button>
+              <p className="text-sm mt-4 opacity-80">
+                🎁 Sem compromisso • Acesso imediato • 100% gratuito
+              </p>
+            </div>
+            <div className="relative">
+              <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2 hover:rotate-0 transition-transform">
+                <img 
+                  src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=500&h=600&fit=crop" 
+                  alt="Jesus com crianças" 
+                  className="rounded-lg w-full"
+                />
                 <div 
-                  className="absolute -top-3 -right-3 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2"
+                  className="absolute -top-4 -right-4 text-white px-6 py-3 rounded-full font-bold shadow-lg"
                   style={{ backgroundColor: COLORS.green }}
                 >
-                  <Award className="w-4 h-4" />
                   Material Testado ✓
                 </div>
               </div>
@@ -304,32 +234,112 @@ export default function LandingPageRemaViva() {
         </div>
       </header>
 
-      {/* Seção de Produtos - ATUALIZADA */}
+      {/* Autoridade - MESMA SEÇÃO */}
+      <section className="bg-white py-8 border-y border-gray-200">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-center">
+            <div className="flex items-center gap-3">
+              <Shield className="w-8 h-8" style={{ color: COLORS.blue }} />
+              <div className="text-left">
+                <p className="font-bold text-gray-800">Editora Rema Viva</p>
+                <p className="text-sm text-gray-600">Fidelidade Reformada</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-8 h-8" style={{ color: COLORS.green }} />
+              <div className="text-left">
+                <p className="font-bold text-gray-800">Teologia Calvinista</p>
+                <p className="text-sm text-gray-600">Doutrina Presbiteriana</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Users className="w-8 h-8" style={{ color: COLORS.orange }} />
+              <div className="text-left">
+                <p className="font-bold text-gray-800">Aprovado por Líderes</p>
+                <p className="text-sm text-gray-600">Igrejas e Ministérios</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dores vs Soluções - MESMA SEÇÃO */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-800">
+            Pare de Perder Tempo Preparando Aulas
+          </h2>
+          <p className="text-xl text-center text-gray-600 mb-16">
+            Você não está sozinho nestes desafios...
+          </p>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Dores */}
+            <div 
+              className="rounded-xl p-8 border-2"
+              style={{ 
+                backgroundColor: `${COLORS.orange}15`,
+                borderColor: `${COLORS.orange}40`
+              }}
+            >
+              <h3 className="text-2xl font-bold mb-6 text-red-800 flex items-center gap-2">
+                😰 Desafios que Você Enfrenta
+              </h3>
+              <ul className="space-y-4">
+                {painPoints.map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span style={{ color: COLORS.orange, fontSize: '1.25rem' }}>✗</span>
+                    <span className="text-gray-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Soluções */}
+            <div 
+              className="rounded-xl p-8 border-2"
+              style={{ 
+                backgroundColor: `${COLORS.green}15`,
+                borderColor: `${COLORS.green}40`
+              }}
+            >
+              <h3 className="text-2xl font-bold mb-6 text-green-800 flex items-center gap-2">
+                ✨ Nossa Solução Para Você
+              </h3>
+              <ul className="space-y-4">
+                {solutions.map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <Check className="w-6 h-6 flex-shrink-0" style={{ color: COLORS.green }} />
+                    <span className="text-gray-700 font-medium">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Oferta Principal - ATUALIZADA COM NOVOS PREÇOS */}
       <section 
-        className="py-20 text-white relative overflow-hidden"
-        id="produtos"
+        className="py-20 text-white"
+        id="assinatura"
         style={{ 
-          background: `linear-gradient(135deg, ${COLORS.blue} 0%, #2563eb 100%)`
+          background: `linear-gradient(to bottom right, ${COLORS.blue}, ${COLORS.green})`
         }}
       >
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-64 h-64 rounded-full bg-white"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-white"></div>
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Escolha Seu Material
+              Materiais Editora Rema Viva
             </h2>
             <p className="text-xl opacity-90">
-              Da amostra grátis ao kit completo
+              Escolha entre o material gratuito ou adquira nossas lições completas
             </p>
           </div>
 
-          {/* Timer de Oferta */}
+          {/* Timer de Escassez */}
           <div 
-            className="rounded-xl p-6 mb-12 max-w-2xl mx-auto shadow-2xl"
+            className="rounded-xl p-6 mb-12 max-w-2xl mx-auto"
             style={{ 
               backgroundColor: COLORS.yellow,
               color: COLORS.black
@@ -337,7 +347,7 @@ export default function LandingPageRemaViva() {
           >
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Clock className="w-8 h-8" />
-              <p className="text-xl font-bold">Preços promocionais por tempo limitado!</p>
+              <p className="text-xl font-bold">Preço Promocional por tempo limitado:</p>
               <div className="flex gap-4">
                 <div className="text-center">
                   <div 
@@ -379,53 +389,31 @@ export default function LandingPageRemaViva() {
             </div>
           </div>
 
-          {/* Produtos - TRÊS OPÇÕES */}
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {/* Produtos - 3 OPÇÕES */}
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* GRATUITO */}
-            <div 
-              className="rounded-2xl p-8 shadow-2xl backdrop-blur-sm border-2"
-              style={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                color: COLORS.black,
-                borderColor: COLORS.blue
-              }}
-            >
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                  style={{ backgroundColor: `${COLORS.blue}20` }}>
-                  <Download className="w-8 h-8" style={{ color: COLORS.blue }} />
-                </div>
-                <h3 className="text-2xl font-bold mb-2">Material Gratuito</h3>
-                <p className="opacity-70">Para experimentar</p>
+            <div className="bg-white text-gray-800 rounded-2xl p-8 shadow-2xl">
+              <h3 className="text-2xl font-bold mb-4">Material Gratuito</h3>
+              <div className="mb-6">
+                <span className="text-5xl font-bold" style={{ color: COLORS.green }}>R$ 0</span>
+                <span className="text-gray-600">/grátis</span>
               </div>
-              
-              <div className="mb-6 text-center">
-                <span className="text-4xl font-bold" style={{ color: COLORS.green }}>R$ 0</span>
-                <span className="opacity-70">/gratuito</span>
-              </div>
-              
               <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.green }} />
-                  <span>Ligação amostra da série</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.green }} />
-                  <span>Atividades básicas</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.green }} />
-                  <span>Acesso imediato</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.green }} />
-                  <span>Sem compromisso</span>
-                </li>
+                {[
+                  'Lição amostra da série',
+                  'Atividades básicas incluídas',
+                  'Acesso imediato após cadastro',
+                  'Sem necessidade de pagamento'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <Check className="w-5 h-5" style={{ color: COLORS.green }} />
+                    <span>{item}</span>
+                  </li>
+                ))}
               </ul>
-              
               <button 
                 onClick={() => setShowFreeModal(true)}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 hover:scale-105 transform"
+                className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
                 style={{ 
                   backgroundColor: COLORS.blue,
                   color: 'white'
@@ -434,302 +422,319 @@ export default function LandingPageRemaViva() {
                 <Download className="w-5 h-5" />
                 Baixar Grátis
               </button>
-              
-              <p className="text-center text-sm mt-4 opacity-70">
-                Apenas preencha o formulário
-              </p>
             </div>
 
             {/* SÉRIE 1 - R$ 19,90 */}
-            <div 
-              className="rounded-2xl p-8 shadow-2xl backdrop-blur-sm border-2 relative"
-              style={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                color: COLORS.black,
-                borderColor: COLORS.green
-              }}
-            >
-              <div 
-                className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1 rounded-full text-sm font-bold"
-                style={{ 
-                  backgroundColor: COLORS.green,
-                  color: 'white'
-                }}
-              >
-                MAIS VENDIDO
+            <div className="bg-white text-gray-800 rounded-2xl p-8 shadow-2xl">
+              <h3 className="text-2xl font-bold mb-4">Série: Quem é Jesus?</h3>
+              <p className="text-gray-600 mb-2">Lição 1 - Jesus: Filho de Deus</p>
+              <div className="mb-6">
+                <span className="text-5xl font-bold" style={{ color: COLORS.blue }}>R$ 19,90</span>
+                <span className="text-gray-600">/único</span>
               </div>
-              
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                  style={{ backgroundColor: `${COLORS.green}20` }}>
-                  <FileText className="w-8 h-8" style={{ color: COLORS.green }} />
-                </div>
-                <h3 className="text-2xl font-bold mb-2">Série: Quem é Jesus?</h3>
-                <p className="opacity-70">Lição 1 - Jesus: Filho de Deus</p>
-              </div>
-              
-              <div className="mb-6 text-center">
-                <span className="text-4xl font-bold" style={{ color: COLORS.green }}>R$ 19,90</span>
-                <span className="opacity-70">/único</span>
-                <div className="text-sm mt-1 opacity-70">Pagamento único</div>
-              </div>
-              
               <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.green }} />
-                  <span>Ligação completa (PDF)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.green }} />
-                  <span>Guia do professor</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.green }} />
-                  <span>Atividades extras</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.green }} />
-                  <span>Acesso imediato após pagamento</span>
-                </li>
+                {[
+                  'Lição completa em PDF',
+                  'Guia do professor detalhado',
+                  'Atividades extras inclusas',
+                  'Acesso vitalício',
+                  'Material para imprimir',
+                  '100% cristocêntrico'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <Check className="w-5 h-5" style={{ color: COLORS.blue }} />
+                    <span>{item}</span>
+                  </li>
+                ))}
               </ul>
-              
               <button 
                 onClick={handleSerie1}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 hover:scale-105 transform"
+                className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
                 style={{ 
-                  backgroundColor: COLORS.green,
+                  backgroundColor: COLORS.blue,
                   color: 'white'
                 }}
               >
-                <ShoppingCart className="w-5 h-5" />
-                Comprar Agora
+                <CreditCard className="w-5 h-5" />
+                Comprar Agora R$ 19,90
               </button>
-              
-              <p className="text-center text-sm mt-4 opacity-70">
-                Pagamento via Mercado Pago
-              </p>
             </div>
 
             {/* KIT 3 LIÇÕES - R$ 49,90 */}
-            <div 
-              className="rounded-2xl p-8 shadow-2xl backdrop-blur-sm border-4 relative"
+            <div className="rounded-2xl p-8 shadow-2xl relative border-4"
               style={{ 
-                background: `linear-gradient(135deg, ${COLORS.green} 0%, ${COLORS.blue} 100%)`,
+                background: `linear-gradient(to bottom right, ${COLORS.green}, ${COLORS.blue})`,
                 color: 'white',
                 borderColor: COLORS.yellow
               }}
             >
               <div 
-                className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded-full font-bold flex items-center gap-2 shadow-lg"
+                className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded-full font-bold"
                 style={{ 
                   backgroundColor: COLORS.yellow,
                   color: COLORS.black
                 }}
               >
-                <Gift className="w-4 h-4" />
-                MELHOR CUSTO-BENEFÍCIO
+                🎉 MELHOR OFERTA
               </div>
-              
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-white/20">
-                  <Package className="w-8 h-8" style={{ color: COLORS.yellow }} />
-                </div>
-                <h3 className="text-2xl font-bold mb-2">Kit Completo</h3>
-                <p className="opacity-90">3 primeiras lições da série</p>
+              <h3 className="text-2xl font-bold mb-4 mt-4">Kit Completo</h3>
+              <p className="opacity-90 mb-2">3 primeiras lições da série</p>
+              <div className="mb-2">
+                <span className="opacity-70 line-through text-xl">R$ 59,70</span>
               </div>
-              
-              <div className="mb-2 text-center">
-                <span className="opacity-70 line-through">R$ 59,70</span>
-              </div>
-              <div className="mb-6 text-center">
+              <div className="mb-6">
                 <span className="text-5xl font-bold">R$ 49,90</span>
-                <span className="opacity-90">/kit</span>
-                <div 
-                  className="font-bold mt-2"
-                  style={{ color: COLORS.yellow }}
-                >
-                  Economize R$ 9,80
+                <span className="opacity-90">/kit completo</span>
+                <div className="font-bold mt-2" style={{ color: COLORS.yellow }}>
+                  Economize R$ 9,80 (16% OFF)
                 </div>
               </div>
-              
               <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.yellow }} />
-                  <span className="font-medium">3 lições completas</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.yellow }} />
-                  <span className="font-medium">+ Guias do professor</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.yellow }} />
-                  <span className="font-medium">+ Atividades extras</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.yellow }} />
-                  <span className="font-medium">+ Materiais visuais</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-5 h-5" style={{ color: COLORS.yellow }} />
-                  <span className="font-medium">Acesso imediato</span>
-                </li>
+                {[
+                  '3 lições completas da série',
+                  'Todos os guias do professor',
+                  'Atividades extras exclusivas',
+                  'Materiais visuais profissionais',
+                  'Acesso vitalício a tudo',
+                  'Bônus: plano de aulas'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <Check className="w-5 h-5" style={{ color: COLORS.yellow }} />
+                    <span className="font-medium">{item}</span>
+                  </li>
+                ))}
               </ul>
-              
               <button 
                 onClick={handleKit3}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 hover:scale-105 transform"
+                className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
                 style={{ 
                   backgroundColor: COLORS.yellow,
                   color: COLORS.black
                 }}
               >
                 <Target className="w-5 h-5" />
-                Comprar Kit Completo
+                Comprar Kit R$ 49,90
               </button>
-              
-              <p className="text-center text-sm mt-4 opacity-90">
-                🌟 16% de desconto no pacote
-              </p>
             </div>
           </div>
 
-          {/* Logos de Pagamento */}
           <div className="text-center mt-12">
-            <div className="flex flex-col items-center justify-center gap-4">
-              <div className="flex items-center justify-center gap-6 flex-wrap">
-                <img 
-                  src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.18.9/mercadopago/logo__large_plus.png" 
-                  alt="Mercado Pago" 
-                  className="h-10"
-                />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-8" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-8" />
-                <img src="https://logodownload.org/wp-content/uploads/2020/04/pix-banco-central-logo-3.png" alt="PIX" className="h-8" />
-              </div>
-              
-              <div className="flex items-center justify-center gap-4 flex-wrap mt-4">
-                <p className="opacity-90 flex items-center gap-2">
-                  <Lock className="w-4 h-4" />
-                  Pagamento 100% Seguro
-                </p>
-                <p className="opacity-90 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4" />
-                  Cartão (até 12x), PIX ou Boleto
-                </p>
-              </div>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <img 
+                src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.18.9/mercadopago/logo__large_plus.png" 
+                alt="Mercado Pago" 
+                className="h-8"
+              />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-8 opacity-80" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-8 opacity-80" />
+              <p className="opacity-90 flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                Pagamento 100% Seguro via Mercado Pago
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ... RESTANTE DO CÓDIGO (testimonials, FAQ, footer) MANTIDO IGUAL ... */}
-      {/* (Mantive igual ao anterior para não ficar muito longo) */}
+      {/* Prova Social - MESMA SEÇÃO */}
+      <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-800">
+            O Que Dizem Nossos Parceiros
+          </h2>
+          <p className="text-center text-gray-600 mb-12">
+            Professores e líderes que já transformaram suas aulas
+          </p>
 
-      {/* Modal Material Gratuito - ATUALIZADO */}
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, i) => (
+              <div key={i} className="bg-gray-50 rounded-xl p-6 shadow-lg">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-gray-700 mb-4 italic">"{testimonial.text}"</p>
+                <div className="border-t pt-4">
+                  <p className="font-bold text-gray-800">{testimonial.name}</p>
+                  <p className="text-sm text-gray-600">{testimonial.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ - MESMA SEÇÃO */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12 text-gray-800">
+            Perguntas Frequentes
+          </h2>
+
+          <div className="space-y-4">
+            {faqItems.map((faq, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <button
+                  onClick={() => toggleFaq(i)}
+                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-bold text-gray-800">{faq.q}</span>
+                  <ChevronDown className={`w-5 h-5 text-gray-600 transition-transform ${faqOpen[i] ? 'rotate-180' : ''}`} />
+                </button>
+                {faqOpen[i] && (
+                  <div className="px-6 pb-4 text-gray-700">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final - MESMA SEÇÃO */}
+      <section 
+        className="py-20 text-white"
+        style={{ 
+          background: `linear-gradient(to right, ${COLORS.green}, ${COLORS.blue})`
+        }}
+      >
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            Comece Hoje Mesmo a Transformar Suas Aulas
+          </h2>
+          <p className="text-xl mb-8 opacity-90">
+            Junte-se a centenas de professores e líderes que já ensinam com excelência
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button 
+              onClick={() => setShowFreeModal(true)}
+              className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-2"
+              style={{ 
+                backgroundColor: COLORS.yellow,
+                color: COLORS.black
+              }}
+            >
+              📥 Baixar Lição Gratuita
+            </button>
+            <a 
+              href="#assinatura"
+              className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl inline-block flex items-center justify-center gap-2"
+              style={{ 
+                backgroundColor: 'white',
+                color: COLORS.black
+              }}
+            >
+              ✨ Ver Produtos
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer - MESMA SEÇÃO */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
+            <div>
+              <h3 className="text-xl font-bold mb-4" style={{ color: COLORS.yellow }}>Editora Rema Viva</h3>
+              <p className="text-gray-400">
+                Ensinar a Bíblia às crianças não precisa ser difícil. Você não está sozinho.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4">Contato</h4>
+              <div className="space-y-2 text-gray-400">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  <span>contato@editoraremaviva.com.br</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  <span>(14) 99999-9999</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4">Siga-nos</h4>
+              <div className="space-y-2 text-gray-400">
+                <a href="https://www.instagram.com/editoraremaviva/" target="_blank" rel="noopener noreferrer" className="block hover:text-yellow-400 transition-colors">
+                  📱 Instagram @editoraremaviva
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
+            <p>&copy; 2025 Editora Rema Viva. Todos os direitos reservados.</p>
+            <div className="mt-2 space-x-4">
+              <a href="#" className="hover:text-yellow-400 transition-colors">Termos de Uso</a>
+              <a href="#" className="hover:text-yellow-400 transition-colors">Política de Privacidade</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* Modal Material Gratuito - MESMA SEÇÃO */}
       {showFreeModal && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm" 
-          onClick={() => setShowFreeModal(false)}
-        >
-          <div 
-            className="bg-white rounded-2xl max-w-md w-full p-8 relative"
-            style={{ color: COLORS.black }}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowFreeModal(false)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 relative" onClick={(e) => e.stopPropagation()}>
             <button 
               onClick={() => setShowFreeModal(false)}
-              className="absolute top-4 right-4 hover:opacity-70 transition-opacity"
-              style={{ color: COLORS.black }}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
             >
               ✕
             </button>
-            
-            <div className="text-center mb-6">
-              <div 
-                className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ backgroundColor: `${COLORS.blue}20` }}
-              >
-                <Download className="w-6 h-6" style={{ color: COLORS.blue }} />
-              </div>
-              <h3 className="text-2xl font-bold mb-2">
-                🎁 Receba Sua Lição Gratuita
-              </h3>
-              <p className="opacity-70">
-                Preencha abaixo e receba imediatamente:
-              </p>
-            </div>
-            
+            <h3 className="text-2xl font-bold mb-4 text-gray-800">
+              🎁 Receba Sua Lição Gratuita
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Preencha os dados abaixo e receba imediatamente em seu e-mail:
+            </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 opacity-80">
-                  Nome Completo *
-                </label>
+                <label className="block text-sm font-medium mb-1 text-gray-700">Nome Completo *</label>
                 <input 
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all"
-                  style={{ 
-                    borderColor: `${COLORS.black}20`,
-                    backgroundColor: COLORS.gray
-                  }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Seu nome"
                 />
               </div>
-              
               <div>
-                <label className="block text-sm font-medium mb-1 opacity-80">
-                  E-mail *
-                </label>
+                <label className="block text-sm font-medium mb-1 text-gray-700">E-mail *</label>
                 <input 
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all"
-                  style={{ 
-                    borderColor: `${COLORS.black}20`,
-                    backgroundColor: COLORS.gray
-                  }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="seu@email.com"
                 />
               </div>
-              
               <div>
-                <label className="block text-sm font-medium mb-1 opacity-80">
-                  WhatsApp (opcional, para suporte)
-                </label>
+                <label className="block text-sm font-medium mb-1 text-gray-700">WhatsApp (opcional)</label>
                 <input 
                   type="tel"
-                  value={formData.telefone}
-                  onChange={(e) => setFormData({...formData, telefone: e.target.value})}
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all"
-                  style={{ 
-                    borderColor: `${COLORS.black}20`,
-                    backgroundColor: COLORS.gray
-                  }}
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="(14) 99999-9999"
                 />
               </div>
-              
               <button 
-                onClick={handleFreeSubmit}
+                onClick={handleSubmit}
                 className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2"
                 style={{ 
-                  background: `linear-gradient(135deg, ${COLORS.blue} 0%, ${COLORS.green} 100%)`,
+                  background: `linear-gradient(to right, ${COLORS.blue}, ${COLORS.green})`,
                   color: 'white'
                 }}
               >
                 <Download className="w-5 h-5" />
                 Enviar e Receber Material Grátis
               </button>
-              
-              <div className="text-xs text-center opacity-60 space-y-1">
-                <p className="flex items-center justify-center gap-1">
-                  <Lock className="w-3 h-3" />
-                  Seus dados estão seguros. Não compartilhamos com terceiros.
-                </p>
-                <p>🔔 Você também entrará na nossa lista de novidades</p>
-              </div>
+              <p className="text-xs text-gray-500 text-center">
+                Seus dados estão seguros. Não compartilhamos com terceiros.
+              </p>
             </div>
           </div>
         </div>
