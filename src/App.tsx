@@ -20,6 +20,10 @@ interface Testimonial {
   text: string;
 }
 
+// LINKS PARA PAGAMENTO
+// PRIMEIRO --> 19,90 (Série quem é Jesus? - lição 1 - Jesus:  Filho de Deus) --> https://mpago.li/1QAb8kq
+// SEGUNDO  --> 49,90 (Kit com as 3 primeiras lições da "Série quem é Jesus?) --> https://mpago.la/2AdPPmt
+
 // Nova paleta de cores
 const COLORS = {
   blue: '#2E88FF',     // Azul Esperança
