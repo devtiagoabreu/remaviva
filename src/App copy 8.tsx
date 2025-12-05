@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet'; // ADICIONADO
 import { Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail, Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -338,17 +337,11 @@ export default function LandingPageRemaViva() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* HELMET PARA FAVICON E TÍTULO - ADICIONADO */}
-      <Helmet>
+      {/* Favicon */}
+      <head>
         <link rel="icon" href="https://i.ibb.co/VpxG4Qv3/favicon-32x32.png" />
         <title>Editora Rema Viva - Materiais Bíblicos Cristocêntricos</title>
-        <meta name="description" content="Conteúdo bíblico, cristocêntrico e fácil de aplicar. Economize horas de preparação e ensine as crianças com profundidade, clareza e simplicidade." />
-        <meta name="keywords" content="material bíblico infantil, escola dominical, lições bíblicas, editora rema viva, ministério infantil, ensino cristão" />
-        <meta property="og:title" content="Editora Rema Viva - Materiais Bíblicos Cristocêntricos" />
-        <meta property="og:description" content="Conteúdo bíblico, cristocêntrico e fácil de aplicar. Economize horas de preparação e ensine as crianças com profundidade, clareza e simplicidade." />
-        <meta property="og:image" content="https://i.ibb.co/YTLbYWFw/remaviva-natal.jpg" />
-        <meta property="og:type" content="website" />
-      </Helmet>
+      </head>
 
       {/* Hero Section */}
       <header 
@@ -852,7 +845,7 @@ export default function LandingPageRemaViva() {
               <div className="space-y-2 text-gray-400">
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
-                  <span>remaviva@gmail.com</span>
+                  <span>remaviva@gmail.com</span> {/* EMAIL ALTERADO */}
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
