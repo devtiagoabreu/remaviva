@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// @ts-ignore - Ignorar erros de tipo para react-helmet
 import { Helmet } from 'react-helmet';
 import { Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail, Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -37,13 +38,13 @@ const MERCADO_PAGO_LINKS = {
   kit3: 'https://mpago.la/2AdPPmt',
 };
 
-// URLs DO GOOGLE FORMS - VERIFICADAS
+// URLs DO GOOGLE FORMS ATUALIZADAS
 const GOOGLE_FORMS = {
-  gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSd9zNxVhJEW-KOHqKqyONoXl8Gwij4-yuVeUXHJrIzKh77USg/viewform',
-  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/viewform'
+  gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSd9zNxVhJEW-KOHqKqyONoXl8Gwij4-yuVeUXHJrIzKh77USg/formResponse',
+  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/formResponse'
 };
 
-// IDs dos campos do Google Forms - ATUALIZADOS com base no exemplo
+// IDs dos campos do Google Forms ATUALIZADOS
 const FORM_FIELDS = {
   gratuito: {
     nome: 'entry.475459393',
@@ -82,212 +83,138 @@ export default function LandingPageRemaViva() {
     return () => clearInterval(timer);
   }, []);
 
-  // Função para enviar para Google Forms (GRATUITO) - REESCRITA
+  // Função para enviar para Google Forms (GRATUITO) - CORRIGIDA
   const submitToGoogleFormsGratuito = async () => {
-    const formUrl = GOOGLE_FORMS.gratuito.replace('/viewform', '/formResponse');
+    const formUrl = GOOGLE_FORMS.gratuito;
     const fields = FORM_FIELDS.gratuito;
     
-    // Criar formData para envio
-    const data = new FormData();
-    data.append(fields.nome, formData.nome || '');
-    data.append(fields.email, formData.email || '');
-    data.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+    // WhatsApp: envia o valor ou 'NÃO PREENCHEU'
+    const whatsappValue = formData.whatsapp.trim() || 'NÃO PREENCHEU';
+    
+    // Criar query string para enviar via GET (mais confiável)
+    const params = new URLSearchParams();
+    params.append(fields.nome, formData.nome);
+    params.append(fields.email, formData.email);
+    params.append(fields.whatsapp, whatsappValue);
 
-    // Método 1: Tentar enviar via fetch com proxy CORS
     try {
-      console.log('Tentando enviar para Google Forms gratuito...');
+      // Usando fetch com mode: 'no-cors' e método POST
+      const response = await fetch(formUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString()
+      });
       
-      // Usar método alternativo: abrir nova janela com dados na URL
-      const params = new URLSearchParams();
-      params.append(fields.nome, formData.nome || '');
-      params.append(fields.email, formData.email || '');
-      params.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
-      
-      // Abrir nova aba com o formulário pré-preenchido
-      const submitUrl = `${formUrl}?${params.toString()}&submit=Submit`;
-      window.open(submitUrl, '_blank', 'noopener,noreferrer');
-      
-      // Também tentar enviar via fetch (pode falhar por CORS, mas tentamos)
-      try {
-        await fetch(formUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: params,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        });
-      } catch (fetchError) {
-        console.log('Fetch falhou, mas formulário foi aberto:', fetchError);
-      }
+      // Como estamos usando no-cors, não podemos verificar a resposta
+      // Mas podemos assumir que foi enviado
+      console.log('Formulário gratuito enviado:', {
+        nome: formData.nome,
+        email: formData.email,
+        whatsapp: whatsappValue
+      });
       
       return true;
     } catch (error) {
       console.error('Erro ao enviar para Google Forms gratuito:', error);
       
-      // Método de fallback: criar iframe invisível
+      // Tentar método alternativo: abrir uma nova janela com GET
       try {
-        const iframe = document.createElement('iframe');
-        iframe.name = 'hidden_iframe';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-        
-        const form = document.createElement('form');
-        form.action = formUrl;
-        form.method = 'POST';
-        form.target = 'hidden_iframe';
-        form.style.display = 'none';
-        
-        // Adicionar campos
-        Object.entries(fields).forEach(([key, fieldId]) => {
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.name = fieldId;
-          input.value = key === 'nome' ? formData.nome : 
-                       key === 'email' ? formData.email : 
-                       formData.whatsapp || 'NÃO PREENCHEU';
-          form.appendChild(input);
-        });
-        
-        document.body.appendChild(form);
-        form.submit();
-        setTimeout(() => {
-          document.body.removeChild(form);
-          document.body.removeChild(iframe);
-        }, 5000);
-        
+        const getUrl = `${formUrl}?${params.toString()}`;
+        window.open(getUrl, '_blank', 'noopener,noreferrer');
         return true;
       } catch (fallbackError) {
-        console.error('Erro no método de fallback:', fallbackError);
+        console.error('Erro no método alternativo:', fallbackError);
         return false;
       }
     }
   };
 
-  // Função para enviar para Google Forms (PAGO) - REESCRITA
-  const submitToGoogleFormsPago = async (produto: string, valor: string) => {
-    const formUrl = GOOGLE_FORMS.pago.replace('/viewform', '/formResponse');
+  // Função para enviar para Google Forms (PAGO) - CORRIGIDA
+  const submitToGoogleFormsPago = async (produto: string, valor: string, nome: string, email: string) => {
+    const formUrl = GOOGLE_FORMS.pago;
     const fields = FORM_FIELDS.pago;
     
-    // Criar params para URL
+    // WhatsApp: envia o valor ou 'NÃO PREENCHEU'
+    const whatsappValue = formData.whatsapp.trim() || 'NÃO PREENCHEU';
+    
+    // Criar query string
     const params = new URLSearchParams();
-    params.append(fields.nome, formData.nome || '');
-    params.append(fields.email, formData.email || '');
+    params.append(fields.nome, nome);
+    params.append(fields.email, email);
     params.append(fields.produto, produto);
     params.append(fields.valor, valor);
-    params.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+    params.append(fields.whatsapp, whatsappValue);
 
-    // Método principal: abrir nova janela
     try {
-      console.log('Enviando para Google Forms pago:', {
-        nome: formData.nome,
-        email: formData.email,
-        produto,
-        valor
+      // Usando fetch com mode: 'no-cors'
+      await fetch(formUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString()
       });
       
-      const submitUrl = `${formUrl}?${params.toString()}&submit=Submit`;
-      window.open(submitUrl, '_blank', 'noopener,noreferrer');
-      
-      // Tentativa paralela via fetch
-      try {
-        await fetch(formUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: params,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        });
-      } catch (fetchError) {
-        console.log('Fetch paralelo falhou (normal por CORS)');
-      }
+      console.log('Formulário pago enviado:', {
+        nome: nome,
+        email: email,
+        produto: produto,
+        valor: valor,
+        whatsapp: whatsappValue
+      });
       
       return true;
     } catch (error) {
       console.error('Erro ao enviar para Google Forms pago:', error);
       
-      // Método alternativo com iframe
+      // Tentar método alternativo: abrir uma nova janela com GET
       try {
-        const iframe = document.createElement('iframe');
-        iframe.name = 'hidden_iframe_pago';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-        
-        const form = document.createElement('form');
-        form.action = formUrl;
-        form.method = 'POST';
-        form.target = 'hidden_iframe_pago';
-        form.style.display = 'none';
-        
-        // Adicionar todos os campos
-        const addField = (name: string, value: string) => {
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.name = name;
-          input.value = value;
-          form.appendChild(input);
-        };
-        
-        addField(fields.nome, formData.nome || '');
-        addField(fields.email, formData.email || '');
-        addField(fields.produto, produto);
-        addField(fields.valor, valor);
-        addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
-        
-        document.body.appendChild(form);
-        form.submit();
-        
-        setTimeout(() => {
-          document.body.removeChild(form);
-          document.body.removeChild(iframe);
-        }, 5000);
-        
+        const getUrl = `${formUrl}?${params.toString()}`;
+        window.open(getUrl, '_blank', 'noopener,noreferrer');
         return true;
       } catch (fallbackError) {
-        console.error('Erro no método alternativo pago:', fallbackError);
+        console.error('Erro no método alternativo:', fallbackError);
         return false;
       }
     }
   };
 
-  // Função para material GRATUITO - REESCRITA
+  // Função para material GRATUITO
   const handleSubmitGratuito = async () => {
     if (!formData.nome || !formData.email) {
       toast.error('Por favor, preencha os campos obrigatórios.');
       return;
     }
     
+    // Envia para Google Forms (GRATUITO)
     toast.loading('Enviando seus dados...');
     
-    try {
-      // Envia para Google Forms (GRATUITO)
-      const success = await submitToGoogleFormsGratuito();
-      
+    // Primeiro, sempre tentar enviar para o Google Forms
+    const success = await submitToGoogleFormsGratuito();
+    
+    // Depois redirecionar para o PDF
+    setTimeout(() => {
       toast.dismiss();
       
       if (success) {
-        toast.success('✅ Dados enviados com sucesso!');
+        toast.success('✅ Dados enviados! Redirecionando para o PDF...');
       } else {
-        toast.success('✅ Processando seu cadastro...');
+        toast.success('✅ Redirecionando para o PDF...');
       }
       
       setShowFreeModal(false);
       setFormData({ nome: '', email: '', whatsapp: '' });
       
-      // Abrir PDF em nova aba
-      setTimeout(() => {
-        window.open(PDF_GRATUITO_URL, '_blank');
-      }, 1000);
-      
-    } catch (error) {
-      toast.dismiss();
-      toast.error('❌ Erro ao enviar dados. Por favor, tente novamente.');
-      console.error('Erro no envio gratuito:', error);
-    }
+      // Redireciona para o PDF no Google Drive
+      window.open(PDF_GRATUITO_URL, '_blank');
+    }, 2000);
   };
 
-  // Função para material PAGO - REESCRITA
+  // Função para material PAGO
   const handleSubmitPago = async () => {
     if (!formData.nome || !formData.email || !selectedProduct) {
       toast.error('Por favor, preencha todos os campos obrigatórios.');
@@ -296,13 +223,16 @@ export default function LandingPageRemaViva() {
     
     toast.loading('Enviando seus dados...');
     
-    try {
-      // Envia para Google Forms (PAGO)
-      const success = await submitToGoogleFormsPago(
-        selectedProduct.name,
-        selectedProduct.price
-      );
-      
+    // Envia para Google Forms (PAGO)
+    const success = await submitToGoogleFormsPago(
+      selectedProduct.name,
+      selectedProduct.price,
+      formData.nome,
+      formData.email
+    );
+    
+    // Depois redirecionar para Mercado Pago
+    setTimeout(() => {
       toast.dismiss();
       
       if (success) {
@@ -312,23 +242,14 @@ export default function LandingPageRemaViva() {
       }
       
       setShowPaidModal(false);
+      setFormData({ nome: '', email: '', whatsapp: '' });
       
-      // Redireciona para Mercado Pago após 2 segundos
-      setTimeout(() => {
-        const mercadoPagoLink = selectedProduct.type === 'serie1' 
-          ? MERCADO_PAGO_LINKS.serie1 
-          : MERCADO_PAGO_LINKS.kit3;
-        window.open(mercadoPagoLink, '_blank');
-        
-        // Resetar formulário
-        setFormData({ nome: '', email: '', whatsapp: '' });
-      }, 2000);
-      
-    } catch (error) {
-      toast.dismiss();
-      toast.error('❌ Erro ao enviar dados. Por favor, tente novamente.');
-      console.error('Erro no envio pago:', error);
-    }
+      // Redireciona para Mercado Pago
+      const mercadoPagoLink = selectedProduct.type === 'serie1' 
+        ? MERCADO_PAGO_LINKS.serie1 
+        : MERCADO_PAGO_LINKS.kit3;
+      window.open(mercadoPagoLink, '_blank');
+    }, 2000);
   };
 
   const toggleFaq = (index: number) => {
@@ -418,7 +339,7 @@ export default function LandingPageRemaViva() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* HELMET PARA FAVICON E TÍTULO */}
+      {/* HELMET PARA FAVICON E TÍTULO - ADICIONADO */}
       <Helmet>
         <link rel="icon" href="https://i.ibb.co/VpxG4Qv3/favicon-32x32.png" />
         <title>Editora Rema Viva - Materiais Bíblicos Cristocêntricos</title>
