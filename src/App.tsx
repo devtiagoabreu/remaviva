@@ -37,13 +37,13 @@ const MERCADO_PAGO_LINKS = {
   kit3: 'https://mpago.la/2AdPPmt',
 };
 
-// URLs DO GOOGLE FORMS - VERIFICADAS
+// URLs DO GOOGLE FORMS - URLS DE ENVIO (não viewform)
 const GOOGLE_FORMS = {
-  gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSd9zNxVhJEW-KOHqKqyONoXl8Gwij4-yuVeUXHJrIzKh77USg/viewform',
-  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/viewform'
+  gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSd9zNxVhJEW-KOHqKqyONoXl8Gwij4-yuVeUXHJrIzKh77USg/formResponse',
+  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/formResponse'
 };
 
-// IDs dos campos do Google Forms - ATUALIZADOS com base no exemplo
+// IDs dos campos do Google Forms - CONFIRMADOS
 const FORM_FIELDS = {
   gratuito: {
     nome: 'entry.475459393',
@@ -82,148 +82,188 @@ export default function LandingPageRemaViva() {
     return () => clearInterval(timer);
   }, []);
 
-  // Função para enviar para Google Forms (GRATUITO) - REESCRITA
+  // Função para enviar para Google Forms (GRATUITO) - CORRIGIDA
   const submitToGoogleFormsGratuito = async () => {
-    const formUrl = GOOGLE_FORMS.gratuito.replace('/viewform', '/formResponse');
+    const formUrl = GOOGLE_FORMS.gratuito;
     const fields = FORM_FIELDS.gratuito;
     
-    // Criar formData para envio
-    const data = new FormData();
-    data.append(fields.nome, formData.nome || '');
-    data.append(fields.email, formData.email || '');
-    data.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+    // Criar FormData para envio
+    const formDataToSend = new FormData();
+    formDataToSend.append(fields.nome, formData.nome || '');
+    formDataToSend.append(fields.email, formData.email || '');
+    formDataToSend.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+    
+    console.log('Enviando dados GRATUITOS para Google Forms:', {
+      nome: formData.nome,
+      email: formData.email,
+      whatsapp: formData.whatsapp || 'NÃO PREENCHEU'
+    });
 
-    // Método 1: Tentar enviar via fetch com proxy CORS
+    // Método 1: Usando fetch com no-cors (mais confiável para Google Forms)
     try {
-      console.log('Tentando enviar para Google Forms gratuito...');
-      
-      // Usar método alternativo: abrir nova janela com dados na URL
+      // Criar URLSearchParams
       const params = new URLSearchParams();
       params.append(fields.nome, formData.nome || '');
       params.append(fields.email, formData.email || '');
       params.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
       
-      // Abrir nova aba com o formulário pré-preenchido
-      const submitUrl = `${formUrl}?${params.toString()}&submit=Submit`;
-      window.open(submitUrl, '_blank', 'noopener,noreferrer');
+      // Usar fetch com no-cors
+      const response = await fetch(formUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: params,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
       
-      // Também tentar enviar via fetch (pode falhar por CORS, mas tentamos)
-      try {
-        await fetch(formUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: params,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        });
-      } catch (fetchError) {
-        console.log('Fetch falhou, mas formulário foi aberto:', fetchError);
-      }
-      
+      console.log('Requisição enviada (no-cors)');
       return true;
-    } catch (error) {
-      console.error('Erro ao enviar para Google Forms gratuito:', error);
       
-      // Método de fallback: criar iframe invisível
+    } catch (error) {
+      console.error('Erro com fetch no-cors:', error);
+      
+      // Método 2: Criar iframe e form dinamicamente (como no exemplo)
       try {
+        // Criar iframe oculto
         const iframe = document.createElement('iframe');
-        iframe.name = 'hidden_iframe';
+        iframe.name = 'hidden_iframe_gratuito';
         iframe.style.display = 'none';
+        iframe.style.position = 'absolute';
+        iframe.style.top = '-1000px';
+        iframe.style.left = '-1000px';
         document.body.appendChild(iframe);
         
+        // Criar formulário
         const form = document.createElement('form');
-        form.action = formUrl;
         form.method = 'POST';
-        form.target = 'hidden_iframe';
+        form.action = formUrl;
+        form.target = 'hidden_iframe_gratuito';
         form.style.display = 'none';
         
         // Adicionar campos
-        Object.entries(fields).forEach(([key, fieldId]) => {
+        const addField = (name: string, value: string) => {
           const input = document.createElement('input');
-          input.type = 'text';
-          input.name = fieldId;
-          input.value = key === 'nome' ? formData.nome : 
-                       key === 'email' ? formData.email : 
-                       formData.whatsapp || 'NÃO PREENCHEU';
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
           form.appendChild(input);
-        });
+        };
         
+        addField(fields.nome, formData.nome || '');
+        addField(fields.email, formData.email || '');
+        addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+        
+        // Adicionar ao DOM e enviar
         document.body.appendChild(form);
         form.submit();
-        setTimeout(() => {
-          document.body.removeChild(form);
-          document.body.removeChild(iframe);
-        }, 5000);
         
+        // Limpar após envio
+        setTimeout(() => {
+          if (document.body.contains(form)) document.body.removeChild(form);
+          if (document.body.contains(iframe)) document.body.removeChild(iframe);
+        }, 3000);
+        
+        console.log('Formulário enviado via iframe');
         return true;
-      } catch (fallbackError) {
-        console.error('Erro no método de fallback:', fallbackError);
-        return false;
+        
+      } catch (iframeError) {
+        console.error('Erro com iframe:', iframeError);
+        
+        // Método 3: Abrir nova janela com POST (fallback final)
+        try {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = formUrl;
+          form.target = '_blank';
+          form.style.display = 'none';
+          
+          const addField = (name: string, value: string) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+          };
+          
+          addField(fields.nome, formData.nome || '');
+          addField(fields.email, formData.email || '');
+          addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+          
+          document.body.appendChild(form);
+          form.submit();
+          
+          setTimeout(() => {
+            if (document.body.contains(form)) document.body.removeChild(form);
+          }, 3000);
+          
+          console.log('Formulário enviado via nova janela');
+          return true;
+          
+        } catch (finalError) {
+          console.error('Todos os métodos falharam:', finalError);
+          return false;
+        }
       }
     }
   };
 
-  // Função para enviar para Google Forms (PAGO) - REESCRITA
+  // Função para enviar para Google Forms (PAGO) - CORRIGIDA
   const submitToGoogleFormsPago = async (produto: string, valor: string) => {
-    const formUrl = GOOGLE_FORMS.pago.replace('/viewform', '/formResponse');
+    const formUrl = GOOGLE_FORMS.pago;
     const fields = FORM_FIELDS.pago;
     
-    // Criar params para URL
-    const params = new URLSearchParams();
-    params.append(fields.nome, formData.nome || '');
-    params.append(fields.email, formData.email || '');
-    params.append(fields.produto, produto);
-    params.append(fields.valor, valor);
-    params.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+    console.log('Enviando dados PAGOS para Google Forms:', {
+      nome: formData.nome,
+      email: formData.email,
+      produto,
+      valor,
+      whatsapp: formData.whatsapp || 'NÃO PREENCHEU'
+    });
 
-    // Método principal: abrir nova janela
+    // Método 1: Usando fetch com no-cors
     try {
-      console.log('Enviando para Google Forms pago:', {
-        nome: formData.nome,
-        email: formData.email,
-        produto,
-        valor
+      const params = new URLSearchParams();
+      params.append(fields.nome, formData.nome || '');
+      params.append(fields.email, formData.email || '');
+      params.append(fields.produto, produto);
+      params.append(fields.valor, valor);
+      params.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+      
+      await fetch(formUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: params,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
       
-      const submitUrl = `${formUrl}?${params.toString()}&submit=Submit`;
-      window.open(submitUrl, '_blank', 'noopener,noreferrer');
-      
-      // Tentativa paralela via fetch
-      try {
-        await fetch(formUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: params,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        });
-      } catch (fetchError) {
-        console.log('Fetch paralelo falhou (normal por CORS)');
-      }
-      
+      console.log('Requisição paga enviada (no-cors)');
       return true;
-    } catch (error) {
-      console.error('Erro ao enviar para Google Forms pago:', error);
       
-      // Método alternativo com iframe
+    } catch (error) {
+      console.error('Erro com fetch no-cors pago:', error);
+      
+      // Método 2: Iframe
       try {
         const iframe = document.createElement('iframe');
         iframe.name = 'hidden_iframe_pago';
         iframe.style.display = 'none';
+        iframe.style.position = 'absolute';
+        iframe.style.top = '-1000px';
+        iframe.style.left = '-1000px';
         document.body.appendChild(iframe);
         
         const form = document.createElement('form');
-        form.action = formUrl;
         form.method = 'POST';
+        form.action = formUrl;
         form.target = 'hidden_iframe_pago';
         form.style.display = 'none';
         
-        // Adicionar todos os campos
         const addField = (name: string, value: string) => {
           const input = document.createElement('input');
-          input.type = 'text';
+          input.type = 'hidden';
           input.name = name;
           input.value = value;
           form.appendChild(input);
@@ -239,19 +279,57 @@ export default function LandingPageRemaViva() {
         form.submit();
         
         setTimeout(() => {
-          document.body.removeChild(form);
-          document.body.removeChild(iframe);
-        }, 5000);
+          if (document.body.contains(form)) document.body.removeChild(form);
+          if (document.body.contains(iframe)) document.body.removeChild(iframe);
+        }, 3000);
         
+        console.log('Formulário pago enviado via iframe');
         return true;
-      } catch (fallbackError) {
-        console.error('Erro no método alternativo pago:', fallbackError);
-        return false;
+        
+      } catch (iframeError) {
+        console.error('Erro com iframe pago:', iframeError);
+        
+        // Método 3: Nova janela
+        try {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = formUrl;
+          form.target = '_blank';
+          form.style.display = 'none';
+          
+          const addField = (name: string, value: string) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+          };
+          
+          addField(fields.nome, formData.nome || '');
+          addField(fields.email, formData.email || '');
+          addField(fields.produto, produto);
+          addField(fields.valor, valor);
+          addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+          
+          document.body.appendChild(form);
+          form.submit();
+          
+          setTimeout(() => {
+            if (document.body.contains(form)) document.body.removeChild(form);
+          }, 3000);
+          
+          console.log('Formulário pago enviado via nova janela');
+          return true;
+          
+        } catch (finalError) {
+          console.error('Todos os métodos pago falharam:', finalError);
+          return false;
+        }
       }
     }
   };
 
-  // Função para material GRATUITO - REESCRITA
+  // Função para material GRATUITO
   const handleSubmitGratuito = async () => {
     if (!formData.nome || !formData.email) {
       toast.error('Por favor, preencha os campos obrigatórios.');
@@ -275,7 +353,7 @@ export default function LandingPageRemaViva() {
       setShowFreeModal(false);
       setFormData({ nome: '', email: '', whatsapp: '' });
       
-      // Abrir PDF em nova aba
+      // Abrir PDF em nova aba após 1 segundo
       setTimeout(() => {
         window.open(PDF_GRATUITO_URL, '_blank');
       }, 1000);
@@ -287,7 +365,7 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Função para material PAGO - REESCRITA
+  // Função para material PAGO
   const handleSubmitPago = async () => {
     if (!formData.nome || !formData.email || !selectedProduct) {
       toast.error('Por favor, preencha todos os campos obrigatórios.');
@@ -335,7 +413,7 @@ export default function LandingPageRemaViva() {
     setFaqOpen(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
-  // Funções para abrir modais PAGOS (com formulário primeiro)
+  // Funções para abrir modais PAGOS
   const openSerie1Modal = () => {
     setSelectedProduct({
       type: 'serie1',
@@ -589,7 +667,7 @@ export default function LandingPageRemaViva() {
         </div>
       </section>
 
-      {/* Oferta Principal - COM LAYOUT ALTERADO */}
+      {/* Oferta Principal */}
       <section 
         className="py-20 text-white"
         id="assinatura"
@@ -659,7 +737,7 @@ export default function LandingPageRemaViva() {
             </div>
           </div>
 
-          {/* Produtos - COM LAYOUT MELHORADO */}
+          {/* Produtos */}
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
             
             {/* GRATUITO */}
