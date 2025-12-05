@@ -10,3 +10,4 @@ https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn
 
 # para o favicon
 npm install react-helmet
+npm install --save-dev @types/react-helmet
