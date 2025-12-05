@@ -502,7 +502,7 @@ export default function LandingPageRemaViva() {
         </div>
       </section>
 
-      {/* Oferta Principal - COM LAYOUT ALTERADO */}
+      {/* Oferta Principal - COM BOTÕES ALINHADOS */}
       <section 
         className="py-20 text-white"
         id="assinatura"
@@ -572,22 +572,19 @@ export default function LandingPageRemaViva() {
             </div>
           </div>
 
-          {/* Produtos - COM LAYOUT MELHORADO */}
+          {/* Produtos - COM BOTÕES ALINHADOS NA MESMA ALTURA */}
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
-            
             {/* GRATUITO */}
             <div className="bg-white text-gray-800 rounded-2xl p-8 shadow-2xl flex flex-col">
               <div className="flex-grow">
                 <h3 className="text-2xl font-bold mb-4">Material Gratuito</h3>
-                <div className="mb-4 flex flex-col items-center">
+                <div className="mb-6">
                   <span className="text-5xl font-bold" style={{ color: COLORS.green }}>R$ 0</span>
-                  <span className="text-gray-600 text-lg">/grátis</span>
-                </div>
-                <div className="text-center text-gray-600 mb-6">
-                  <p className="font-medium">Lição amostra da série</p>
+                  <span className="text-gray-600">/grátis</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {[
+                    'Lição amostra da série',
                     'Atividades básicas incluídas',
                     'Acesso imediato após cadastro',
                     'Sem necessidade de pagamento'
@@ -602,9 +599,9 @@ export default function LandingPageRemaViva() {
               <div className="mt-auto">
                 <button 
                   onClick={() => setShowFreeModal(true)}
-                  className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2 hover:opacity-90"
+                  className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
                   style={{ 
-                    backgroundColor: COLORS.green,
+                    backgroundColor: COLORS.blue,
                     color: 'white'
                   }}
                 >
@@ -618,12 +615,10 @@ export default function LandingPageRemaViva() {
             <div className="bg-white text-gray-800 rounded-2xl p-8 shadow-2xl flex flex-col">
               <div className="flex-grow">
                 <h3 className="text-2xl font-bold mb-4">Série: Quem é Jesus?</h3>
-                <div className="mb-4 flex flex-col items-center">
+                <p className="text-gray-600 mb-2">Lição 1 - Jesus: Filho de Deus</p>
+                <div className="mb-6">
                   <span className="text-5xl font-bold" style={{ color: COLORS.blue }}>R$ 19,90</span>
-                  <span className="text-gray-600 text-lg">/único</span>
-                </div>
-                <div className="text-center text-gray-600 mb-6">
-                  <p className="font-medium">Lição 1 - Jesus: Filho de Deus</p>
+                  <span className="text-gray-600">/único</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {[
@@ -644,45 +639,47 @@ export default function LandingPageRemaViva() {
               <div className="mt-auto">
                 <button 
                   onClick={openSerie1Modal}
-                  className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2 hover:opacity-90"
+                  className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
                   style={{ 
                     backgroundColor: COLORS.blue,
                     color: 'white'
                   }}
                 >
                   <CreditCard className="w-5 h-5" />
-                  Comprar Agora
+                  Comprar Agora R$ 19,90
                 </button>
               </div>
             </div>
 
             {/* KIT 3 LIÇÕES - R$ 49,90 */}
-            <div className="bg-white text-gray-800 rounded-2xl p-8 shadow-2xl flex flex-col relative border-4"
+            <div className="rounded-2xl p-8 shadow-2xl relative border-4 flex flex-col"
               style={{ 
+                background: `linear-gradient(to bottom right, ${COLORS.green}, ${COLORS.blue})`,
+                color: 'white',
                 borderColor: COLORS.yellow
               }}
             >
               <div 
-                className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-6 py-1 rounded-full font-bold text-sm"
+                className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded-full font-bold"
                 style={{ 
                   backgroundColor: COLORS.yellow,
                   color: COLORS.black
                 }}
               >
-                MELHOR OFERTA
+                🎉 MELHOR OFERTA
               </div>
               <div className="flex-grow">
-                <h3 className="text-2xl font-bold mb-4 mt-2">Kit Completo</h3>
-                <div className="mb-4 flex flex-col items-center">
-                  <span className="text-5xl font-bold" style={{ color: COLORS.green }}>R$ 49,90</span>
-                  <span className="text-gray-600 text-lg">/kit completo</span>
+                <h3 className="text-2xl font-bold mb-4 mt-4">Kit Completo</h3>
+                <p className="opacity-90 mb-2">3 primeiras lições da série</p>
+                <div className="mb-2">
+                  <span className="opacity-70 line-through text-xl">R$ 59,70</span>
                 </div>
-                <div className="text-center text-gray-600 mb-6">
-                  <p className="font-medium">3 primeiras lições da série</p>
-                  <p className="text-sm text-gray-500 line-through mt-1">R$ 59,70</p>
-                  <p className="font-bold mt-2" style={{ color: COLORS.green }}>
+                <div className="mb-6">
+                  <span className="text-5xl font-bold">R$ 49,90</span>
+                  <span className="opacity-90">/kit completo</span>
+                  <div className="font-bold mt-2" style={{ color: COLORS.yellow }}>
                     Economize R$ 9,80 (16% OFF)
-                  </p>
+                  </div>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {[
@@ -694,7 +691,7 @@ export default function LandingPageRemaViva() {
                     'Bônus: plano de aulas'
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-2">
-                      <Check className="w-5 h-5" style={{ color: COLORS.green }} />
+                      <Check className="w-5 h-5" style={{ color: COLORS.yellow }} />
                       <span className="font-medium">{item}</span>
                     </li>
                   ))}
@@ -703,14 +700,14 @@ export default function LandingPageRemaViva() {
               <div className="mt-auto">
                 <button 
                   onClick={openKit3Modal}
-                  className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2 hover:opacity-90"
+                  className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
                   style={{ 
                     backgroundColor: COLORS.yellow,
                     color: COLORS.black
                   }}
                 >
                   <Target className="w-5 h-5" />
-                  Comprar Kit
+                  Comprar Kit R$ 49,90
                 </button>
               </div>
             </div>
