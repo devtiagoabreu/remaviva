@@ -87,124 +87,58 @@ export default function LandingPageRemaViva() {
     const formUrl = GOOGLE_FORMS.gratuito;
     const fields = FORM_FIELDS.gratuito;
     
-    // Criar FormData para envio
-    const formDataToSend = new FormData();
-    formDataToSend.append(fields.nome, formData.nome || '');
-    formDataToSend.append(fields.email, formData.email || '');
-    formDataToSend.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
-    
     console.log('Enviando dados GRATUITOS para Google Forms:', {
       nome: formData.nome,
       email: formData.email,
       whatsapp: formData.whatsapp || 'NÃO PREENCHEU'
     });
 
-    // Método 1: Usando fetch com no-cors (mais confiável para Google Forms)
     try {
-      // Criar URLSearchParams
-      const params = new URLSearchParams();
-      params.append(fields.nome, formData.nome || '');
-      params.append(fields.email, formData.email || '');
-      params.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+      // Criar iframe oculto ANTES
+      const iframe = document.createElement('iframe');
+      iframe.name = 'hidden_iframe_gratuito';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
       
-      // Usar fetch com no-cors
-      const response = await fetch(formUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: params,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
+      // Criar formulário
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = formUrl;
+      form.target = 'hidden_iframe_gratuito';
       
-      console.log('Requisição enviada (no-cors)');
-      return true;
+      // Adicionar campos
+      const addField = (name: string, value: string) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      };
       
-    } catch (error) {
-      console.error('Erro com fetch no-cors:', error);
+      addField(fields.nome, formData.nome || '');
+      addField(fields.email, formData.email || '');
+      addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
       
-      // Método 2: Criar iframe e form dinamicamente (como no exemplo)
-      try {
-        // Criar iframe oculto
-        const iframe = document.createElement('iframe');
-        iframe.name = 'hidden_iframe_gratuito';
-        iframe.style.display = 'none';
-        iframe.style.position = 'absolute';
-        iframe.style.top = '-1000px';
-        iframe.style.left = '-1000px';
-        document.body.appendChild(iframe);
-        
-        // Criar formulário
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = formUrl;
-        form.target = 'hidden_iframe_gratuito';
-        form.style.display = 'none';
-        
-        // Adicionar campos
-        const addField = (name: string, value: string) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = name;
-          input.value = value;
-          form.appendChild(input);
-        };
-        
-        addField(fields.nome, formData.nome || '');
-        addField(fields.email, formData.email || '');
-        addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
-        
-        // Adicionar ao DOM e enviar
-        document.body.appendChild(form);
+      // Adicionar ao DOM e enviar
+      document.body.appendChild(form);
+      
+      // Aguardar um momento antes de submeter
+      setTimeout(() => {
         form.submit();
+        console.log('Formulário gratuito enviado via iframe');
         
-        // Limpar após envio
+        // Limpar após 3 segundos
         setTimeout(() => {
           if (document.body.contains(form)) document.body.removeChild(form);
           if (document.body.contains(iframe)) document.body.removeChild(iframe);
         }, 3000);
-        
-        console.log('Formulário enviado via iframe');
-        return true;
-        
-      } catch (iframeError) {
-        console.error('Erro com iframe:', iframeError);
-        
-        // Método 3: Abrir nova janela com POST (fallback final)
-        try {
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = formUrl;
-          form.target = '_blank';
-          form.style.display = 'none';
-          
-          const addField = (name: string, value: string) => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
-            input.value = value;
-            form.appendChild(input);
-          };
-          
-          addField(fields.nome, formData.nome || '');
-          addField(fields.email, formData.email || '');
-          addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
-          
-          document.body.appendChild(form);
-          form.submit();
-          
-          setTimeout(() => {
-            if (document.body.contains(form)) document.body.removeChild(form);
-          }, 3000);
-          
-          console.log('Formulário enviado via nova janela');
-          return true;
-          
-        } catch (finalError) {
-          console.error('Todos os métodos falharam:', finalError);
-          return false;
-        }
-      }
+      }, 100);
+      
+      return true;
+      
+    } catch (error) {
+      console.error('Erro ao enviar formulário gratuito:', error);
+      return false;
     }
   };
 
@@ -221,111 +155,54 @@ export default function LandingPageRemaViva() {
       whatsapp: formData.whatsapp || 'NÃO PREENCHEU'
     });
 
-    // Método 1: Usando fetch com no-cors
     try {
-      const params = new URLSearchParams();
-      params.append(fields.nome, formData.nome || '');
-      params.append(fields.email, formData.email || '');
-      params.append(fields.produto, produto);
-      params.append(fields.valor, valor);
-      params.append(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+      // Criar iframe oculto ANTES
+      const iframe = document.createElement('iframe');
+      iframe.name = 'hidden_iframe_pago';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
       
-      await fetch(formUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: params,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
+      // Criar formulário
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = formUrl;
+      form.target = 'hidden_iframe_pago';
       
-      console.log('Requisição paga enviada (no-cors)');
-      return true;
+      // Adicionar campos
+      const addField = (name: string, value: string) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      };
       
-    } catch (error) {
-      console.error('Erro com fetch no-cors pago:', error);
+      addField(fields.nome, formData.nome || '');
+      addField(fields.email, formData.email || '');
+      addField(fields.produto, produto);
+      addField(fields.valor, valor);
+      addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
       
-      // Método 2: Iframe
-      try {
-        const iframe = document.createElement('iframe');
-        iframe.name = 'hidden_iframe_pago';
-        iframe.style.display = 'none';
-        iframe.style.position = 'absolute';
-        iframe.style.top = '-1000px';
-        iframe.style.left = '-1000px';
-        document.body.appendChild(iframe);
-        
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = formUrl;
-        form.target = 'hidden_iframe_pago';
-        form.style.display = 'none';
-        
-        const addField = (name: string, value: string) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = name;
-          input.value = value;
-          form.appendChild(input);
-        };
-        
-        addField(fields.nome, formData.nome || '');
-        addField(fields.email, formData.email || '');
-        addField(fields.produto, produto);
-        addField(fields.valor, valor);
-        addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
-        
-        document.body.appendChild(form);
+      // Adicionar ao DOM e enviar
+      document.body.appendChild(form);
+      
+      // Aguardar um momento antes de submeter
+      setTimeout(() => {
         form.submit();
+        console.log('Formulário pago enviado via iframe');
         
+        // Limpar após 3 segundos
         setTimeout(() => {
           if (document.body.contains(form)) document.body.removeChild(form);
           if (document.body.contains(iframe)) document.body.removeChild(iframe);
         }, 3000);
-        
-        console.log('Formulário pago enviado via iframe');
-        return true;
-        
-      } catch (iframeError) {
-        console.error('Erro com iframe pago:', iframeError);
-        
-        // Método 3: Nova janela
-        try {
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = formUrl;
-          form.target = '_blank';
-          form.style.display = 'none';
-          
-          const addField = (name: string, value: string) => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
-            input.value = value;
-            form.appendChild(input);
-          };
-          
-          addField(fields.nome, formData.nome || '');
-          addField(fields.email, formData.email || '');
-          addField(fields.produto, produto);
-          addField(fields.valor, valor);
-          addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
-          
-          document.body.appendChild(form);
-          form.submit();
-          
-          setTimeout(() => {
-            if (document.body.contains(form)) document.body.removeChild(form);
-          }, 3000);
-          
-          console.log('Formulário pago enviado via nova janela');
-          return true;
-          
-        } catch (finalError) {
-          console.error('Todos os métodos pago falharam:', finalError);
-          return false;
-        }
-      }
+      }, 100);
+      
+      return true;
+      
+    } catch (error) {
+      console.error('Erro ao enviar formulário pago:', error);
+      return false;
     }
   };
 
@@ -470,7 +347,7 @@ export default function LandingPageRemaViva() {
   const faqItems: FAQItem[] = [
     {
       q: 'O conteúdo é realmente bíblico e cristocêntrico?',
-      a: 'Sim. Todo o material da Editora Rema Viva é fundamentado nas Escrituras, com foco em ensinar às crianças quem Jesus é, o que Ele fez e como elas podem viver a fé no dia a dia. Nosso compromisso é com a fidelidade bíblica e a clareza no discipulado infantil.'
+      a: 'Sim. Todo o material da Editora Rema Viva é fundamentado nas Escrituras, com foco em ensinar às crianças quem Jesus é, o que Ele fez e como elas podem viver a fé no dia a dia. Nosso compromisso é com a fidelidade bíblica e a clareza no discipulado infantil.'
     },
     {
       q: 'Como recebo o material após o pagamento?',
