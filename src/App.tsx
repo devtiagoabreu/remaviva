@@ -339,7 +339,7 @@ export default function LandingPageRemaViva() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Favicon */}
       <head>
-        <link rel="icon" href="https://img.icons8.com/color/96/000000/bible.png" />
+        <link rel="icon" href="../assets/images/favicon-32x32.png" />
         <title>Editora Rema Viva - Materiais Bíblicos Cristocêntricos</title>
       </head>
 
