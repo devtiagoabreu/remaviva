@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail, Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock, ArrowRight } from 'lucide-react';
+import { Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail, Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // Definição de tipos TypeScript
@@ -24,7 +24,7 @@ interface Testimonial {
 const COLORS = {
   blue: '#2E88FF',
   yellow: '#FFD449',
-  green: '#7ACB72',
+  green: '#7ACB72', // CORRIGIDO: tinha ##7ACB72
   orange: '#FF8A42',
   gray: '#F4F4F4',
   black: '#1E1E1E',
@@ -58,7 +58,7 @@ const FORM_FIELDS = {
   }
 };
 
-// LINK DO PDF GRATUITO NO GOOGLE DRIVE
+// LINK DO PDF GRATUITO NO GOOGLE DRIVE (SUBSTITUA PELO SEU LINK)
 const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
 export default function LandingPageRemaViva() {
@@ -337,12 +337,6 @@ export default function LandingPageRemaViva() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Favicon */}
-      <head>
-        <link rel="icon" href="https://img.icons8.com/color/96/000000/bible.png" />
-        <title>Editora Rema Viva - Materiais Bíblicos Cristocêntricos</title>
-      </head>
-
       {/* Hero Section */}
       <header 
         className="text-white"
@@ -370,31 +364,18 @@ export default function LandingPageRemaViva() {
               <p className="text-xl mb-8 opacity-90">
                 Conteúdo bíblico, cristocêntrico e fácil de aplicar. Economize horas de preparação e ensine as crianças com profundidade, clareza e simplicidade.
               </p>
-              
-              {/* BOTÕES ALTERADOS - Dois botões lado a lado */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                <button 
-                  onClick={() => setShowFreeModal(true)}
-                  className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-2 flex-1"
-                  style={{ 
-                    backgroundColor: COLORS.yellow,
-                    color: COLORS.black
-                  }}
-                >
-                  <Download className="w-6 h-6" />
-                  Baixe a Lição Gratuita
-                </button>
-                
-                <a 
-                  href="#assinatura"
-                  className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-2 flex-1 border-2 border-white bg-transparent hover:bg-white/10"
-                >
-                  <ArrowRight className="w-6 h-6" />
-                  ✨ Ver Produtos
-                </a>
-              </div>
-              
-              <p className="text-sm opacity-80">
+              <button 
+                onClick={() => setShowFreeModal(true)}
+                className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center gap-2"
+                style={{ 
+                  backgroundColor: COLORS.yellow,
+                  color: COLORS.black
+                }}
+              >
+                <Download className="w-6 h-6" />
+                Baixe a Lição de Natal Gratuitamente!
+              </button>
+              <p className="text-sm mt-4 opacity-80">
                 🎁 Sem compromisso • Acesso imediato • 100% gratuito
               </p>
             </div>
@@ -842,7 +823,7 @@ export default function LandingPageRemaViva() {
               <div className="space-y-2 text-gray-400">
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
-                  <span>remaviva@gmail.com</span> {/* EMAIL ALTERADO */}
+                  <span>contato@editoraremaviva.com.br</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
