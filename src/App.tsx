@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet'; // ADICIONADO
+// @ts-ignore - Ignorar erros de tipo para react-helmet
+import { Helmet } from 'react-helmet';
 import { Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail, Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
