@@ -382,8 +382,8 @@ export default function LandingPageRemaViva() {
             <div className="relative">
               <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2 hover:rotate-0 transition-transform">
                 <img 
-                  src="https://i.ibb.co/qLdP2rfy/natal.png" 
-                  alt="Jesus com crianças" 
+                  src="https://i.ibb.co/YTLbYWFw/remaviva-natal.jpg" 
+                  alt="Lição de Natal" 
                   className="rounded-lg w-full"
                 />
                 <div 
