@@ -10,6 +10,12 @@ interface FormData {
   whatsapp: string;
 }
 
+interface FormErrors {
+  nome?: string;
+  email?: string;
+  whatsapp?: string;
+}
+
 interface FAQItem {
   q: string;
   a: string;
@@ -62,12 +68,18 @@ const FORM_FIELDS = {
 // LINK DO PDF GRATUITO NO GOOGLE DRIVE
 const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
+// Regex para validação
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const WHATSAPP_REGEX = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
+
 export default function LandingPageRemaViva() {
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 30 });
   const [showFreeModal, setShowFreeModal] = useState(false);
   const [showPaidModal, setShowPaidModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<{type: 'serie1' | 'kit3', name: string, price: string} | null>(null);
   const [formData, setFormData] = useState<FormData>({ nome: '', email: '', whatsapp: '' });
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [faqOpen, setFaqOpen] = useState<Record<number, boolean>>({});
   
   // Refs para focus trap
@@ -108,8 +120,8 @@ export default function LandingPageRemaViva() {
       // Adiciona listener para ESC
       const handleEsc = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
-          if (showFreeModal) setShowFreeModal(false);
-          if (showPaidModal) setShowPaidModal(false);
+          if (showFreeModal) closeFreeModal();
+          if (showPaidModal) closePaidModal();
         }
       };
       
@@ -156,7 +168,74 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Função para enviar para Google Forms (GRATUITO) - CORRIGIDA
+  // Validação do formulário
+  const validateForm = (isFree = true): boolean => {
+    const errors: FormErrors = {};
+    let isValid = true;
+
+    // Validação do nome
+    if (!formData.nome.trim()) {
+      errors.nome = 'Nome é obrigatório';
+      isValid = false;
+    } else if (formData.nome.trim().length < 2) {
+      errors.nome = 'Nome deve ter pelo menos 2 caracteres';
+      isValid = false;
+    }
+
+    // Validação do email
+    if (!formData.email.trim()) {
+      errors.email = 'Email é obrigatório';
+      isValid = false;
+    } else if (!EMAIL_REGEX.test(formData.email)) {
+      errors.email = 'Email inválido';
+      isValid = false;
+    }
+
+    // Validação do WhatsApp (opcional mas se preenchido, deve ser válido)
+    if (formData.whatsapp.trim() && !WHATSAPP_REGEX.test(formData.whatsapp)) {
+      errors.whatsapp = 'WhatsApp inválido. Use o formato: (14) 99999-9999';
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
+  // Formatar WhatsApp enquanto digita
+  const formatWhatsApp = (value: string): string => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
+    
+    // Formatação: (XX) XXXXX-XXXX
+    if (numbers.length <= 2) {
+      return numbers;
+    } else if (numbers.length <= 6) {
+      return `(${numbers.slice(0,2)}) ${numbers.slice(2)}`;
+    } else if (numbers.length <= 10) {
+      return `(${numbers.slice(0,2)}) ${numbers.slice(2,6)}-${numbers.slice(6)}`;
+    } else {
+      return `(${numbers.slice(0,2)}) ${numbers.slice(2,7)}-${numbers.slice(7,11)}`;
+    }
+  };
+
+  // Manipulador de mudança nos campos do formulário
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    let formattedValue = value;
+    
+    // Aplica máscara no WhatsApp
+    if (field === 'whatsapp') {
+      formattedValue = formatWhatsApp(value);
+    }
+    
+    setFormData(prev => ({ ...prev, [field]: formattedValue }));
+    
+    // Limpa erro do campo quando o usuário começa a digitar
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  // Função para enviar para Google Forms (GRATUITO)
   const submitToGoogleFormsGratuito = async () => {
     const formUrl = GOOGLE_FORMS.gratuito;
     const fields = FORM_FIELDS.gratuito;
@@ -216,7 +295,7 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Função para enviar para Google Forms (PAGO) - CORRIGIDA
+  // Função para enviar para Google Forms (PAGO)
   const submitToGoogleFormsPago = async (produto: string, valor: string) => {
     const formUrl = GOOGLE_FORMS.pago;
     const fields = FORM_FIELDS.pago;
@@ -282,18 +361,20 @@ export default function LandingPageRemaViva() {
 
   // Função para material GRATUITO
   const handleSubmitGratuito = async () => {
-    if (!formData.nome || !formData.email) {
-      toast.error('Por favor, preencha os campos obrigatórios.');
+    // Validação antes de enviar
+    if (!validateForm(true)) {
+      toast.error('Por favor, corrija os erros no formulário.');
       return;
     }
     
-    toast.loading('Enviando seus dados...');
+    setIsSubmitting(true);
+    const loadingToast = toast.loading('Enviando seus dados...');
     
     try {
       // Envia para Google Forms (GRATUITO)
       const success = await submitToGoogleFormsGratuito();
       
-      toast.dismiss();
+      toast.dismiss(loadingToast);
       
       if (success) {
         toast.success('✅ Dados enviados com sucesso!');
@@ -301,8 +382,7 @@ export default function LandingPageRemaViva() {
         toast.success('✅ Processando seu cadastro...');
       }
       
-      setShowFreeModal(false);
-      setFormData({ nome: '', email: '', whatsapp: '' });
+      closeFreeModal();
       
       // Abrir PDF em nova aba após 1 segundo
       setTimeout(() => {
@@ -310,20 +390,29 @@ export default function LandingPageRemaViva() {
       }, 1000);
       
     } catch (error) {
-      toast.dismiss();
+      toast.dismiss(loadingToast);
       toast.error('❌ Erro ao enviar dados. Por favor, tente novamente.');
       console.error('Erro no envio gratuito:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   // Função para material PAGO
   const handleSubmitPago = async () => {
-    if (!formData.nome || !formData.email || !selectedProduct) {
-      toast.error('Por favor, preencha todos os campos obrigatórios.');
+    if (!selectedProduct) {
+      toast.error('Produto não selecionado.');
+      return;
+    }
+
+    // Validação antes de enviar
+    if (!validateForm(false)) {
+      toast.error('Por favor, corrija os erros no formulário.');
       return;
     }
     
-    toast.loading('Enviando seus dados...');
+    setIsSubmitting(true);
+    const loadingToast = toast.loading('Enviando seus dados...');
     
     try {
       // Envia para Google Forms (PAGO)
@@ -332,7 +421,7 @@ export default function LandingPageRemaViva() {
         selectedProduct.price
       );
       
-      toast.dismiss();
+      toast.dismiss(loadingToast);
       
       if (success) {
         toast.success('✅ Dados enviados! Redirecionando para pagamento...');
@@ -340,7 +429,7 @@ export default function LandingPageRemaViva() {
         toast.success('✅ Redirecionando para pagamento...');
       }
       
-      setShowPaidModal(false);
+      closePaidModal();
       
       // Redireciona para Mercado Pago após 2 segundos
       setTimeout(() => {
@@ -350,14 +439,22 @@ export default function LandingPageRemaViva() {
         window.open(mercadoPagoLink, '_blank');
         
         // Resetar formulário
-        setFormData({ nome: '', email: '', whatsapp: '' });
+        resetForm();
       }, 2000);
       
     } catch (error) {
-      toast.dismiss();
+      toast.dismiss(loadingToast);
       toast.error('❌ Erro ao enviar dados. Por favor, tente novamente.');
       console.error('Erro no envio pago:', error);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  // Resetar formulário
+  const resetForm = () => {
+    setFormData({ nome: '', email: '', whatsapp: '' });
+    setFormErrors({});
   };
 
   const toggleFaq = (index: number) => {
@@ -366,6 +463,7 @@ export default function LandingPageRemaViva() {
 
   // Funções para abrir modais PAGOS
   const openSerie1Modal = () => {
+    resetForm();
     setSelectedProduct({
       type: 'serie1',
       name: 'Série: Quem é Jesus? - Lição 1',
@@ -375,6 +473,7 @@ export default function LandingPageRemaViva() {
   };
 
   const openKit3Modal = () => {
+    resetForm();
     setSelectedProduct({
       type: 'kit3',
       name: 'Kit Completo - 3 lições',
@@ -386,12 +485,18 @@ export default function LandingPageRemaViva() {
   // Funções para fechar modais
   const closeFreeModal = () => {
     setShowFreeModal(false);
-    setFormData({ nome: '', email: '', whatsapp: '' });
+    resetForm();
   };
 
   const closePaidModal = () => {
     setShowPaidModal(false);
-    setFormData({ nome: '', email: '', whatsapp: '' });
+    resetForm();
+  };
+
+  // Abrir modal gratuito
+  const openFreeModal = () => {
+    resetForm();
+    setShowFreeModal(true);
   };
 
   // Dados para renderização
@@ -501,7 +606,7 @@ export default function LandingPageRemaViva() {
               {/* BOTÕES ALTERADOS - Dois botões lado a lado */}
               <div className="flex flex-col sm:flex-row gap-4 mb-4">
                 <button 
-                  onClick={() => setShowFreeModal(true)}
+                  onClick={openFreeModal}
                   className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-2 flex-1"
                   style={{ 
                     backgroundColor: COLORS.yellow,
@@ -728,7 +833,7 @@ export default function LandingPageRemaViva() {
               </div>
               <div className="mt-auto">
                 <button 
-                  onClick={() => setShowFreeModal(true)}
+                  onClick={openFreeModal}
                   className="w-full py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2 hover:opacity-90"
                   style={{ 
                     backgroundColor: COLORS.green,
@@ -936,7 +1041,7 @@ export default function LandingPageRemaViva() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
-              onClick={() => setShowFreeModal(true)}
+              onClick={openFreeModal}
               className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-2"
               style={{ 
                 backgroundColor: COLORS.yellow,
@@ -1001,7 +1106,7 @@ export default function LandingPageRemaViva() {
         </div>
       </footer>
 
-      {/* Modal Material Gratuito - ATUALIZADO COM ACESSIBILIDADE */}
+      {/* Modal Material Gratuito - ATUALIZADO COM VALIDAÇÃO */}
       {showFreeModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
@@ -1021,6 +1126,7 @@ export default function LandingPageRemaViva() {
               onClick={closeFreeModal}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
               aria-label="Fechar modal"
+              disabled={isSubmitting}
             >
               ✕
             </button>
@@ -1033,7 +1139,7 @@ export default function LandingPageRemaViva() {
             <p className="text-gray-600 mb-6">
               Preencha os dados abaixo para acessar o PDF gratuito:
             </p>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label htmlFor="free-nome" className="block text-sm font-medium mb-1 text-gray-700">
                   Nome Completo *
@@ -1042,12 +1148,20 @@ export default function LandingPageRemaViva() {
                   id="free-nome"
                   type="text"
                   value={formData.nome}
-                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => handleInputChange('nome', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    formErrors.nome 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   placeholder="Seu nome"
                   required
                   autoFocus
+                  disabled={isSubmitting}
                 />
+                {formErrors.nome && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.nome}</p>
+                )}
               </div>
               <div>
                 <label htmlFor="free-email" className="block text-sm font-medium mb-1 text-gray-700">
@@ -1057,11 +1171,19 @@ export default function LandingPageRemaViva() {
                   id="free-email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    formErrors.email 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   placeholder="seu@email.com"
                   required
+                  disabled={isSubmitting}
                 />
+                {formErrors.email && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                )}
               </div>
               <div>
                 <label htmlFor="free-whatsapp" className="block text-sm font-medium mb-1 text-gray-700">
@@ -1071,24 +1193,45 @@ export default function LandingPageRemaViva() {
                   id="free-whatsapp"
                   type="tel"
                   value={formData.whatsapp}
-                  onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => handleInputChange('whatsapp', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    formErrors.whatsapp 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   placeholder="(14) 99999-9999"
+                  disabled={isSubmitting}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Não obrigatório, mas nos ajuda a enviar novidades
-                </p>
+                {formErrors.whatsapp ? (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.whatsapp}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Não obrigatório, mas nos ajuda a enviar novidades
+                  </p>
+                )}
               </div>
               <button 
                 onClick={handleSubmitGratuito}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 hover:opacity-90"
+                disabled={isSubmitting}
+                className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'
+                }`}
                 style={{ 
                   background: `linear-gradient(to right, ${COLORS.blue}, ${COLORS.green})`,
                   color: 'white'
                 }}
               >
-                <Download className="w-5 h-5" />
-                Enviar e Acessar PDF Grátis
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5" />
+                    Enviar e Acessar PDF Grátis
+                  </>
+                )}
               </button>
               <p className="text-xs text-gray-500 text-center">
                 Seus dados estão seguros. Não compartilhamos com terceiros.
@@ -1098,7 +1241,7 @@ export default function LandingPageRemaViva() {
         </div>
       )}
 
-      {/* Modal Material Pago - ATUALIZADO COM ACESSIBILIDADE */}
+      {/* Modal Material Pago - ATUALIZADO COM VALIDAÇÃO */}
       {showPaidModal && selectedProduct && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
@@ -1118,6 +1261,7 @@ export default function LandingPageRemaViva() {
               onClick={closePaidModal}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
               aria-label="Fechar modal"
+              disabled={isSubmitting}
             >
               ✕
             </button>
@@ -1130,7 +1274,7 @@ export default function LandingPageRemaViva() {
             <p className="text-gray-600 mb-6">
               Preencha seus dados para prosseguir com a compra:
             </p>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label htmlFor="paid-nome" className="block text-sm font-medium mb-1 text-gray-700">
                   Nome Completo *
@@ -1139,12 +1283,20 @@ export default function LandingPageRemaViva() {
                   id="paid-nome"
                   type="text"
                   value={formData.nome}
-                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => handleInputChange('nome', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    formErrors.nome 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   placeholder="Seu nome"
                   required
                   autoFocus
+                  disabled={isSubmitting}
                 />
+                {formErrors.nome && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.nome}</p>
+                )}
               </div>
               <div>
                 <label htmlFor="paid-email" className="block text-sm font-medium mb-1 text-gray-700">
@@ -1154,11 +1306,19 @@ export default function LandingPageRemaViva() {
                   id="paid-email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    formErrors.email 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   placeholder="seu@email.com"
                   required
+                  disabled={isSubmitting}
                 />
+                {formErrors.email && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                )}
               </div>
               <div>
                 <label htmlFor="paid-whatsapp" className="block text-sm font-medium mb-1 text-gray-700">
@@ -1168,13 +1328,22 @@ export default function LandingPageRemaViva() {
                   id="paid-whatsapp"
                   type="tel"
                   value={formData.whatsapp}
-                  onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => handleInputChange('whatsapp', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    formErrors.whatsapp 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   placeholder="(14) 99999-9999"
+                  disabled={isSubmitting}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Não obrigatório, mas nos ajuda a enviar novidades
-                </p>
+                {formErrors.whatsapp ? (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.whatsapp}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Não obrigatório, mas nos ajuda a enviar novidades
+                  </p>
+                )}
               </div>
               <div className="p-4 bg-gray-50 rounded-lg mb-4">
                 <p className="font-bold text-lg" style={{ color: COLORS.blue }}>
@@ -1189,14 +1358,26 @@ export default function LandingPageRemaViva() {
               </div>
               <button 
                 onClick={handleSubmitPago}
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 hover:opacity-90"
+                disabled={isSubmitting}
+                className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'
+                }`}
                 style={{ 
                   background: `linear-gradient(to right, ${COLORS.blue}, ${COLORS.green})`,
                   color: 'white'
                 }}
               >
-                <CreditCard className="w-5 h-5" />
-                Enviar e Ir para Pagamento
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5" />
+                    Enviar e Ir para Pagamento
+                  </>
+                )}
               </button>
               <p className="text-xs text-gray-500 text-center">
                 Pagamento seguro via Mercado Pago. Seus dados estão protegidos.
