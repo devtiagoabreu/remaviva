@@ -43,13 +43,13 @@ const MERCADO_PAGO_LINKS = {
   kit3: 'https://mpago.la/2AdPPmt',
 };
 
-// URLs DO GOOGLE FORMS - URLS DE ENVIO (não viewform)
-const GOOGLE_FORMS = {
-  gratuito: 'https://docs.google.com/forms/d/e/1FAIpQLSd9zNxVhJEW-KOHqKqyONoXl8Gwij4-yuVeUXHJrIzKh77USg/formResponse',
-  pago: 'https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/formResponse'
-};
+// LINK DO PDF GRATUITO NO GOOGLE DRIVE
+const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
-// IDs dos campos do Google Forms - CONFIRMADOS
+// ENDPOINT DO GOOGLE APPS SCRIPT (SUBSTITUA COM SUA URL)
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwo94fsz-P80m9kU8yF3Hj9lwrymqTqufzAB-tYyXrdpqfZtyM59qfx5V8CPhuN5sXW/exec';
+
+// IDs dos campos do Google Forms - CONFIRMADOS (mantidos para fallback)
 const FORM_FIELDS = {
   gratuito: {
     nome: 'entry.475459393',
@@ -64,9 +64,6 @@ const FORM_FIELDS = {
     whatsapp: 'entry.274487651'
   }
 };
-
-// LINK DO PDF GRATUITO NO GOOGLE DRIVE
-const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
 // Regex para validação
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -235,126 +232,152 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Função para enviar para Google Forms (GRATUITO)
-  const submitToGoogleFormsGratuito = async () => {
-    const formUrl = GOOGLE_FORMS.gratuito;
-    const fields = FORM_FIELDS.gratuito;
-    
-    console.log('Enviando dados GRATUITOS para Google Forms:', {
-      nome: formData.nome,
-      email: formData.email,
-      whatsapp: formData.whatsapp || 'NÃO PREENCHEU'
-    });
+  // ============================================
+  // NOVAS FUNÇÕES PARA GOOGLE APPS SCRIPT
+  // ============================================
+
+  // Função principal para enviar para Google Apps Script
+  const submitToGoogleAppsScript = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
+    const payload = {
+      tipo,
+      nome: formData.nome.trim(),
+      email: formData.email.trim(),
+      whatsapp: formData.whatsapp.trim() || 'NÃO PREENCHEU',
+      produto,
+      valor,
+      timestamp: new Date().toISOString(),
+      origem: 'landing-page-rema-viva'
+    };
+
+    console.log('Enviando para Google Apps Script:', payload);
 
     try {
-      // Criar iframe oculto ANTES
-      const iframe = document.createElement('iframe');
-      iframe.name = 'hidden_iframe_gratuito';
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-      
-      // Criar formulário
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = formUrl;
-      form.target = 'hidden_iframe_gratuito';
-      
-      // Adicionar campos
-      const addField = (name: string, value: string) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value;
-        form.appendChild(input);
-      };
-      
-      addField(fields.nome, formData.nome || '');
-      addField(fields.email, formData.email || '');
-      addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
-      
-      // Adicionar ao DOM e enviar
-      document.body.appendChild(form);
-      
-      // Aguardar um momento antes de submeter
-      setTimeout(() => {
-        form.submit();
-        console.log('Formulário gratuito enviado via iframe');
-        
-        // Limpar após 3 segundos
-        setTimeout(() => {
-          if (document.body.contains(form)) document.body.removeChild(form);
-          if (document.body.contains(iframe)) document.body.removeChild(iframe);
-        }, 3000);
-      }, 100);
-      
+      // Usando fetch com 'no-cors' para evitar problemas de CORS
+      // O Google Apps Script aceita requisições de qualquer origem
+      const response = await fetch(GAS_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors', // Importante: usa no-cors
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(payload as any).toString()
+      });
+
+      // Com 'no-cors' não podemos ler a resposta, mas sabemos que foi enviada
+      console.log('Dados enviados para Google Apps Script com sucesso');
       return true;
       
     } catch (error) {
-      console.error('Erro ao enviar formulário gratuito:', error);
-      return false;
+      console.error('Erro ao enviar para Google Apps Script:', error);
+      // Fallback para método antigo se o GAS falhar
+      return await submitViaFallback(tipo, produto, valor);
     }
   };
 
-  // Função para enviar para Google Forms (PAGO)
-  const submitToGoogleFormsPago = async (produto: string, valor: string) => {
-    const formUrl = GOOGLE_FORMS.pago;
-    const fields = FORM_FIELDS.pago;
+  // Fallback: método antigo usando iframe (se o GAS falhar)
+  const submitViaFallback = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
+    console.log('Usando fallback (método iframe)...');
     
-    console.log('Enviando dados PAGOS para Google Forms:', {
-      nome: formData.nome,
-      email: formData.email,
-      produto,
-      valor,
-      whatsapp: formData.whatsapp || 'NÃO PREENCHEU'
-    });
-
     try {
-      // Criar iframe oculto ANTES
-      const iframe = document.createElement('iframe');
-      iframe.name = 'hidden_iframe_pago';
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-      
-      // Criar formulário
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = formUrl;
-      form.target = 'hidden_iframe_pago';
-      
-      // Adicionar campos
-      const addField = (name: string, value: string) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value;
-        form.appendChild(input);
-      };
-      
-      addField(fields.nome, formData.nome || '');
-      addField(fields.email, formData.email || '');
-      addField(fields.produto, produto);
-      addField(fields.valor, valor);
-      addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
-      
-      // Adicionar ao DOM e enviar
-      document.body.appendChild(form);
-      
-      // Aguardar um momento antes de submeter
-      setTimeout(() => {
-        form.submit();
-        console.log('Formulário pago enviado via iframe');
+      if (tipo === 'gratuito') {
+        // URL para formulário gratuito
+        const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSd9zNxVhJEW-KOHqKqyONoXl8Gwij4-yuVeUXHJrIzKh77USg/formResponse';
+        const fields = FORM_FIELDS.gratuito;
         
-        // Limpar após 3 segundos
+        // Criar iframe oculto
+        const iframe = document.createElement('iframe');
+        iframe.name = 'hidden_iframe_gratuito_fallback';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        
+        // Criar formulário
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = formUrl;
+        form.target = 'hidden_iframe_gratuito_fallback';
+        
+        // Adicionar campos
+        const addField = (name: string, value: string) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        };
+        
+        addField(fields.nome, formData.nome || '');
+        addField(fields.email, formData.email || '');
+        addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+        
+        // Adicionar ao DOM e enviar
+        document.body.appendChild(form);
+        
         setTimeout(() => {
-          if (document.body.contains(form)) document.body.removeChild(form);
-          if (document.body.contains(iframe)) document.body.removeChild(iframe);
-        }, 3000);
-      }, 100);
+          form.submit();
+          console.log('Formulário gratuito enviado via fallback (iframe)');
+          
+          // Limpar após 3 segundos
+          setTimeout(() => {
+            if (document.body.contains(form)) document.body.removeChild(form);
+            if (document.body.contains(iframe)) document.body.removeChild(iframe);
+          }, 3000);
+        }, 100);
+        
+        return true;
+        
+      } else if (tipo === 'pago' && produto && valor) {
+        // URL para formulário pago
+        const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/formResponse';
+        const fields = FORM_FIELDS.pago;
+        
+        // Criar iframe oculto
+        const iframe = document.createElement('iframe');
+        iframe.name = 'hidden_iframe_pago_fallback';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        
+        // Criar formulário
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = formUrl;
+        form.target = 'hidden_iframe_pago_fallback';
+        
+        // Adicionar campos
+        const addField = (name: string, value: string) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        };
+        
+        addField(fields.nome, formData.nome || '');
+        addField(fields.email, formData.email || '');
+        addField(fields.produto, produto);
+        addField(fields.valor, valor);
+        addField(fields.whatsapp, formData.whatsapp || 'NÃO PREENCHEU');
+        
+        // Adicionar ao DOM e enviar
+        document.body.appendChild(form);
+        
+        setTimeout(() => {
+          form.submit();
+          console.log('Formulário pago enviado via fallback (iframe)');
+          
+          // Limpar após 3 segundos
+          setTimeout(() => {
+            if (document.body.contains(form)) document.body.removeChild(form);
+            if (document.body.contains(iframe)) document.body.removeChild(iframe);
+          }, 3000);
+        }, 100);
+        
+        return true;
+      }
       
-      return true;
+      return false;
       
     } catch (error) {
-      console.error('Erro ao enviar formulário pago:', error);
+      console.error('Erro no fallback:', error);
       return false;
     }
   };
@@ -371,8 +394,8 @@ export default function LandingPageRemaViva() {
     const loadingToast = toast.loading('Enviando seus dados...');
     
     try {
-      // Envia para Google Forms (GRATUITO)
-      const success = await submitToGoogleFormsGratuito();
+      // Envia para Google Apps Script
+      const success = await submitToGoogleAppsScript('gratuito');
       
       toast.dismiss(loadingToast);
       
@@ -415,8 +438,9 @@ export default function LandingPageRemaViva() {
     const loadingToast = toast.loading('Enviando seus dados...');
     
     try {
-      // Envia para Google Forms (PAGO)
-      const success = await submitToGoogleFormsPago(
+      // Envia para Google Apps Script
+      const success = await submitToGoogleAppsScript(
+        'pago',
         selectedProduct.name,
         selectedProduct.price
       );
@@ -450,6 +474,10 @@ export default function LandingPageRemaViva() {
       setIsSubmitting(false);
     }
   };
+
+  // ============================================
+  // FIM DAS NOVAS FUNÇÕES
+  // ============================================
 
   // Resetar formulário
   const resetForm = () => {
