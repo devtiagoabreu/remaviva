@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail, Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -69,7 +69,13 @@ export default function LandingPageRemaViva() {
   const [selectedProduct, setSelectedProduct] = useState<{type: 'serie1' | 'kit3', name: string, price: string} | null>(null);
   const [formData, setFormData] = useState<FormData>({ nome: '', email: '', whatsapp: '' });
   const [faqOpen, setFaqOpen] = useState<Record<number, boolean>>({});
+  
+  // Refs para focus trap
+  const freeModalRef = useRef<HTMLDivElement>(null);
+  const paidModalRef = useRef<HTMLDivElement>(null);
+  const lastFocusedElement = useRef<HTMLElement | null>(null);
 
+  // Timer countdown
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -81,6 +87,74 @@ export default function LandingPageRemaViva() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Efeito para controlar scroll e focus nos modais
+  useEffect(() => {
+    if (showFreeModal || showPaidModal) {
+      // Salva o elemento que tinha foco antes de abrir o modal
+      lastFocusedElement.current = document.activeElement as HTMLElement;
+      
+      // Bloqueia scroll do body
+      document.body.style.overflow = 'hidden';
+      
+      // Foca no modal quando abrir
+      setTimeout(() => {
+        const modal = showFreeModal ? freeModalRef.current : paidModalRef.current;
+        if (modal) {
+          modal.focus();
+        }
+      }, 100);
+      
+      // Adiciona listener para ESC
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          if (showFreeModal) setShowFreeModal(false);
+          if (showPaidModal) setShowPaidModal(false);
+        }
+      };
+      
+      document.addEventListener('keydown', handleEsc);
+      return () => {
+        document.removeEventListener('keydown', handleEsc);
+      };
+    } else {
+      // Restaura scroll quando modal fecha
+      document.body.style.overflow = 'auto';
+      
+      // Retorna foco para o elemento anterior
+      if (lastFocusedElement.current) {
+        lastFocusedElement.current.focus();
+      }
+    }
+  }, [showFreeModal, showPaidModal]);
+
+  // Função para fazer focus trap (manter foco dentro do modal)
+  const handleTabKey = (e: React.KeyboardEvent, modalRef: React.RefObject<HTMLDivElement>) => {
+    if (e.key !== 'Tab') return;
+    
+    if (!modalRef.current) return;
+    
+    const focusableElements = modalRef.current.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+    
+    if (e.shiftKey) {
+      // Shift + Tab
+      if (document.activeElement === firstElement) {
+        lastElement.focus();
+        e.preventDefault();
+      }
+    } else {
+      // Tab
+      if (document.activeElement === lastElement) {
+        firstElement.focus();
+        e.preventDefault();
+      }
+    }
+  };
 
   // Função para enviar para Google Forms (GRATUITO) - CORRIGIDA
   const submitToGoogleFormsGratuito = async () => {
@@ -307,6 +381,17 @@ export default function LandingPageRemaViva() {
       price: 'R$ 49,90'
     });
     setShowPaidModal(true);
+  };
+
+  // Funções para fechar modais
+  const closeFreeModal = () => {
+    setShowFreeModal(false);
+    setFormData({ nome: '', email: '', whatsapp: '' });
+  };
+
+  const closePaidModal = () => {
+    setShowPaidModal(false);
+    setFormData({ nome: '', email: '', whatsapp: '' });
   };
 
   // Dados para renderização
@@ -818,12 +903,14 @@ export default function LandingPageRemaViva() {
                 <button
                   onClick={() => toggleFaq(i)}
                   className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                  aria-expanded={faqOpen[i] || false}
+                  aria-controls={`faq-answer-${i}`}
                 >
                   <span className="font-bold text-gray-800">{faq.q}</span>
                   <ChevronDown className={`w-5 h-5 text-gray-600 transition-transform ${faqOpen[i] ? 'rotate-180' : ''}`} />
                 </button>
                 {faqOpen[i] && (
-                  <div className="px-6 pb-4 text-gray-700">
+                  <div id={`faq-answer-${i}`} className="px-6 pb-4 text-gray-700">
                     {faq.a}
                   </div>
                 )}
@@ -914,17 +1001,33 @@ export default function LandingPageRemaViva() {
         </div>
       </footer>
 
-      {/* Modal Material Gratuito */}
+      {/* Modal Material Gratuito - ATUALIZADO COM ACESSIBILIDADE */}
       {showFreeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowFreeModal(false)}>
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 relative" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="free-modal-title"
+          onClick={closeFreeModal}
+        >
+          <div 
+            ref={freeModalRef}
+            tabIndex={-1}
+            onKeyDown={(e) => handleTabKey(e, freeModalRef)}
+            className="bg-white rounded-2xl max-w-md w-full p-8 relative outline-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button 
-              onClick={() => setShowFreeModal(false)}
+              onClick={closeFreeModal}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+              aria-label="Fechar modal"
             >
               ✕
             </button>
-            <h3 className="text-2xl font-bold mb-4 text-gray-800">
+            <h3 
+              id="free-modal-title"
+              className="text-2xl font-bold mb-4 text-gray-800"
+            >
               🎁 Receba Sua Lição Gratuita
             </h3>
             <p className="text-gray-600 mb-6">
@@ -932,19 +1035,26 @@ export default function LandingPageRemaViva() {
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Nome Completo *</label>
+                <label htmlFor="free-nome" className="block text-sm font-medium mb-1 text-gray-700">
+                  Nome Completo *
+                </label>
                 <input 
+                  id="free-nome"
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({...formData, nome: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Seu nome"
                   required
+                  autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">E-mail *</label>
+                <label htmlFor="free-email" className="block text-sm font-medium mb-1 text-gray-700">
+                  E-mail *
+                </label>
                 <input 
+                  id="free-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -954,8 +1064,11 @@ export default function LandingPageRemaViva() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">WhatsApp (opcional)</label>
+                <label htmlFor="free-whatsapp" className="block text-sm font-medium mb-1 text-gray-700">
+                  WhatsApp (opcional)
+                </label>
                 <input 
+                  id="free-whatsapp"
                   type="tel"
                   value={formData.whatsapp}
                   onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
@@ -985,17 +1098,33 @@ export default function LandingPageRemaViva() {
         </div>
       )}
 
-      {/* Modal Material Pago */}
+      {/* Modal Material Pago - ATUALIZADO COM ACESSIBILIDADE */}
       {showPaidModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowPaidModal(false)}>
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 relative" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="paid-modal-title"
+          onClick={closePaidModal}
+        >
+          <div 
+            ref={paidModalRef}
+            tabIndex={-1}
+            onKeyDown={(e) => handleTabKey(e, paidModalRef)}
+            className="bg-white rounded-2xl max-w-md w-full p-8 relative outline-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button 
-              onClick={() => setShowPaidModal(false)}
+              onClick={closePaidModal}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+              aria-label="Fechar modal"
             >
               ✕
             </button>
-            <h3 className="text-2xl font-bold mb-4 text-gray-800">
+            <h3 
+              id="paid-modal-title"
+              className="text-2xl font-bold mb-4 text-gray-800"
+            >
               🛒 Finalizar Compra - {selectedProduct.name}
             </h3>
             <p className="text-gray-600 mb-6">
@@ -1003,19 +1132,26 @@ export default function LandingPageRemaViva() {
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Nome Completo *</label>
+                <label htmlFor="paid-nome" className="block text-sm font-medium mb-1 text-gray-700">
+                  Nome Completo *
+                </label>
                 <input 
+                  id="paid-nome"
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({...formData, nome: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Seu nome"
                   required
+                  autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">E-mail *</label>
+                <label htmlFor="paid-email" className="block text-sm font-medium mb-1 text-gray-700">
+                  E-mail *
+                </label>
                 <input 
+                  id="paid-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -1025,8 +1161,11 @@ export default function LandingPageRemaViva() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">WhatsApp (opcional)</label>
+                <label htmlFor="paid-whatsapp" className="block text-sm font-medium mb-1 text-gray-700">
+                  WhatsApp (opcional)
+                </label>
                 <input 
+                  id="paid-whatsapp"
                   type="tel"
                   value={formData.whatsapp}
                   onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
