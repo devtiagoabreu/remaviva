@@ -47,7 +47,7 @@ const MERCADO_PAGO_LINKS = {
 const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
 // ENDPOINT DO GOOGLE APPS SCRIPT (SUBSTITUA COM SUA URL)
-const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwo94fsz-P80m9kU8yF3Hj9lwrymqTqufzAB-tYyXrdpqfZtyM59qfx5V8CPhuN5sXW/exec';
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzeXa9rF8rPt2sAzx0RsHojEtccqQ2WVGR6Os5YZy47KyrgO4-dFDnT4w59AgB2PA75/exec';
 
 // IDs dos campos do Google Forms - CONFIRMADOS (mantidos para fallback)
 const FORM_FIELDS = {
