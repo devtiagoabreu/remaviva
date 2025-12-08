@@ -27,7 +27,7 @@ interface Testimonial {
   text: string;
 }
 
-// Nova paleta de cores - CORRIGIDO
+// Nova paleta de cores
 const COLORS = {
   blue: '#2E88FF',
   yellow: '#FFD449',
@@ -46,10 +46,10 @@ const MERCADO_PAGO_LINKS = {
 // LINK DO PDF GRATUITO NO GOOGLE DRIVE
 const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
-// ENDPOINT DO GOOGLE APPS SCRIPT - VERIFIQUE SE ESTÁ CORRETO!
+// ENDPOINT DO GOOGLE APPS SCRIPT
 const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzeXa9rF8rPt2sAzx0RsHojEtccqQ2WVGR6Os5YZy47KyrgO4-dFDnT4w59AgB2PA75/exec';
 
-// IDs dos campos do Google Forms - CONFIRMADOS (mantidos para fallback)
+// IDs dos campos do Google Forms (fallback)
 const FORM_FIELDS = {
   gratuito: {
     nome: 'entry.475459393',
@@ -232,25 +232,6 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Função auxiliar para testar conexão com GAS
-  const testGASConnection = async (): Promise<boolean> => {
-    try {
-      console.log('🔍 Testando conexão com Google Apps Script...');
-      
-      const response = await fetch(`${GAS_ENDPOINT}?test=${Date.now()}`, {
-        method: 'GET',
-        mode: 'no-cors',
-      });
-      
-      console.log('✅ Teste de conexão completado');
-      return true; // Se chegou aqui, a requisição foi feita
-      
-    } catch (error) {
-      console.log('❌ Falha no teste de conexão:', error);
-      return false;
-    }
-  };
-
   // Backup silencioso usando Image beacon
   const submitSilentBackup = (tipo: 'gratuito' | 'pago', produto?: string, valor?: string) => {
     try {
@@ -393,7 +374,7 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Função principal para enviar para Google Apps Script - VERSÃO CORRIGIDA
+  // FUNÇÃO PRINCIPAL CORRIGIDA - Envia para o seu GAS
   const submitToGoogleAppsScript = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
     const payload = {
       tipo,
@@ -401,55 +382,71 @@ export default function LandingPageRemaViva() {
       email: formData.email.trim(),
       whatsapp: formData.whatsapp.trim() || 'NÃO PREENCHEU',
       produto: produto || '',
-      valor: valor || '',
-      timestamp: new Date().toISOString(),
-      origem: 'landing-page-rema-viva'
+      valor: valor || ''
     };
 
     console.log('📤 Enviando para Google Apps Script:', payload);
 
     try {
-      // Construir a string de dados no formato URL-encoded
+      // Formata os dados como URL encoded (seu GAS espera assim)
       const formDataString = Object.entries(payload)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join('&');
 
       console.log('📝 Dados formatados:', formDataString);
 
-      // Configurar timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+      // ENVIANDO VIA FORMULÁRIO DINÂMICO (funciona melhor com GAS)
+      // Esta é a forma mais confiável de enviar para GAS
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = GAS_ENDPOINT;
+      form.target = 'hidden_iframe_gas';
+      form.style.display = 'none';
 
-      // Enviar para o GAS - CORREÇÃO AQUI
-      const response = await fetch(GAS_ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors', // Mantenha como no-cors para evitar problemas CORS
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        },
-        body: formDataString,
-        signal: controller.signal
+      // Cria um iframe oculto para receber a resposta
+      let iframe = document.getElementById('hidden_iframe_gas') as HTMLIFrameElement;
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'hidden_iframe_gas';
+        iframe.name = 'hidden_iframe_gas';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
+
+      // Adiciona campos ao formulário
+      Object.entries(payload).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
       });
 
-      clearTimeout(timeoutId);
+      // Adiciona formulário ao DOM e envia
+      document.body.appendChild(form);
+      form.submit();
 
-      console.log('✅ Dados enviados para GAS');
-      
-      // IMPORTANTE: Com mode: 'no-cors', não podemos ler a resposta
-      // Mas o GAS ainda recebe os dados e processa
-      
-      // Sempre fazer backup silencioso
+      console.log('✅ Formulário enviado para GAS');
+
+      // Remove o formulário após enviar
+      setTimeout(() => {
+        if (document.body.contains(form)) {
+          document.body.removeChild(form);
+        }
+      }, 3000);
+
+      // Sempre faz backup silencioso
       setTimeout(() => {
         submitSilentBackup(tipo, produto, valor);
       }, 1000);
-      
+
       return true;
-      
+
     } catch (error) {
-      console.error('❌ Erro ao enviar para Google Apps Script:', error);
+      console.error('❌ Erro ao enviar para GAS:', error);
       
-      // Fallback para método antigo se o GAS falhar
-      console.log('🔄 Usando fallback (método iframe)...');
+      // Fallback para Google Forms
+      console.log('🔄 Usando fallback...');
       return await submitViaFallback(tipo, produto, valor);
     }
   };
@@ -657,41 +654,6 @@ export default function LandingPageRemaViva() {
     }
   ];
 
-  // Função para teste manual (remova em produção)
-  const testGASManual = async () => {
-    const testData = {
-      tipo: 'gratuito',
-      nome: 'Teste Manual',
-      email: 'teste@teste.com',
-      whatsapp: '(11) 99999-9999',
-      produto: '',
-      valor: '',
-      timestamp: new Date().toISOString(),
-      origem: 'teste-manual'
-    };
-
-    try {
-      const formDataString = Object.entries(testData)
-        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-        .join('&');
-
-      const response = await fetch(GAS_ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        },
-        body: formDataString
-      });
-
-      console.log('✅ Teste manual enviado');
-      toast.success('Teste enviado para o GAS!');
-    } catch (error) {
-      console.error('❌ Erro no teste manual:', error);
-      toast.error('Erro no teste');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* HELMET PARA FAVICON E TÍTULO */}
@@ -705,15 +667,6 @@ export default function LandingPageRemaViva() {
         <meta property="og:image" content="https://i.ibb.co/YTLbYWFw/remaviva-natal.jpg" />
         <meta property="og:type" content="website" />
       </Helmet>
-
-      {/* Botão de teste (remova em produção) */}
-      <button 
-        onClick={testGASManual} 
-        className="fixed bottom-4 right-4 bg-red-500 text-white p-2 rounded text-xs z-50"
-        style={{ display: 'none' }} // Oculto por padrão
-      >
-        Testar GAS
-      </button>
 
       {/* Hero Section */}
       <header 
