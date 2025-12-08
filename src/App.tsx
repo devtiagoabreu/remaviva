@@ -232,7 +232,7 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Função auxiliar para testar conexão com GAS
+  // Função auxiliar para testar conexão com GAS - CORRIGIDA
   const testGASConnection = async (): Promise<boolean> => {
     try {
       console.log('Testando conexão com Google Apps Script...');
@@ -241,16 +241,22 @@ export default function LandingPageRemaViva() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
       
-      await fetch(`${GAS_ENDPOINT}?test=${Date.now()}`, {
+      const response = await fetch(`${GAS_ENDPOINT}?test=${Date.now()}`, {
         method: 'GET',
-        mode: 'no-cors',
+        mode: 'cors', // Alterado para cors
         signal: controller.signal
       });
       
       clearTimeout(timeoutId);
       
-      console.log('Conexão com Google Apps Script: OK');
-      return true;
+      // Verifica se a resposta é ok
+      if (response.ok) {
+        console.log('Conexão com Google Apps Script: OK - Status:', response.status);
+        return true;
+      } else {
+        console.log('Conexão com Google Apps Script: FALHA - Status:', response.status);
+        return false;
+      }
       
     } catch (error) {
       console.log('Conexão com Google Apps Script: FALHA', error);
@@ -400,7 +406,7 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Função principal para enviar para Google Apps Script
+  // Função principal para enviar para Google Apps Script - CORRIGIDA
   const submitToGoogleAppsScript = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
     const payload = {
       tipo,
@@ -424,14 +430,14 @@ export default function LandingPageRemaViva() {
     }
 
     try {
-      // Usando fetch com timeout
+      // Usando fetch com timeout - CORRIGIDO: removido mode: 'no-cors'
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
       
-      // Tenta enviar para o GAS
-      await fetch(GAS_ENDPOINT, {
+      // Tenta enviar para o GAS - CORREÇÃO CRÍTICA AQUI
+      const response = await fetch(GAS_ENDPOINT, {
         method: 'POST',
-        mode: 'no-cors',
+        // REMOVIDO: mode: 'no-cors' - Este era o erro principal
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -441,16 +447,46 @@ export default function LandingPageRemaViva() {
 
       clearTimeout(timeoutId);
 
-      // Se chegou aqui, a requisição foi enviada
-      console.log('✅ Dados enviados para Google Apps Script');
+      console.log('Resposta do GAS - Status:', response.status, response.statusText);
       
-      // Tenta também enviar via URL GET como backup silencioso
-      // para garantir que os dados cheguem de alguma forma
-      setTimeout(() => {
-        submitSilentBackup(tipo, produto, valor);
-      }, 1000);
-      
-      return true;
+      // Tenta ler a resposta JSON
+      try {
+        const result = await response.json();
+        console.log('Resposta do GAS (JSON):', result);
+        
+        if (result.success) {
+          console.log('✅ Dados enviados com sucesso para Google Apps Script!');
+          
+          // Backup silencioso
+          setTimeout(() => {
+            submitSilentBackup(tipo, produto, valor);
+          }, 1000);
+          
+          return true;
+        } else {
+          console.error('❌ Erro no GAS:', result.message);
+          // Se o GAS falhou, tenta fallback
+          return await submitViaFallback(tipo, produto, valor);
+        }
+      } catch (jsonError) {
+        console.log('Resposta do GAS não é JSON, status:', response.status);
+        
+        // Mesmo que não seja JSON, se o status for 200, consideramos sucesso
+        if (response.ok) {
+          console.log('✅ Dados enviados (resposta não-JSON)');
+          
+          // Backup silencioso
+          setTimeout(() => {
+            submitSilentBackup(tipo, produto, valor);
+          }, 1000);
+          
+          return true;
+        } else {
+          console.error('❌ Erro HTTP do GAS:', response.status);
+          // Se o GAS falhou, tenta fallback
+          return await submitViaFallback(tipo, produto, valor);
+        }
+      }
       
     } catch (error) {
       console.error('❌ Erro ao enviar para Google Apps Script:', error);
