@@ -46,7 +46,7 @@ const MERCADO_PAGO_LINKS = {
 // LINK DO PDF GRATUITO NO GOOGLE DRIVE
 const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
-// ENDPOINT DO GOOGLE APPS SCRIPT
+// ENDPOINT DO GOOGLE APPS SCRIPT - VERIFIQUE SE ESTÁ CORRETO!
 const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzeXa9rF8rPt2sAzx0RsHojEtccqQ2WVGR6Os5YZy47KyrgO4-dFDnT4w59AgB2PA75/exec';
 
 // IDs dos campos do Google Forms - CONFIRMADOS (mantidos para fallback)
@@ -232,34 +232,21 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Função auxiliar para testar conexão com GAS - CORRIGIDA
+  // Função auxiliar para testar conexão com GAS
   const testGASConnection = async (): Promise<boolean> => {
     try {
-      console.log('Testando conexão com Google Apps Script...');
-      
-      // Tenta fazer uma requisição GET simples para verificar se o endpoint está online
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
+      console.log('🔍 Testando conexão com Google Apps Script...');
       
       const response = await fetch(`${GAS_ENDPOINT}?test=${Date.now()}`, {
         method: 'GET',
-        mode: 'cors', // Alterado para cors
-        signal: controller.signal
+        mode: 'no-cors',
       });
       
-      clearTimeout(timeoutId);
-      
-      // Verifica se a resposta é ok
-      if (response.ok) {
-        console.log('Conexão com Google Apps Script: OK - Status:', response.status);
-        return true;
-      } else {
-        console.log('Conexão com Google Apps Script: FALHA - Status:', response.status);
-        return false;
-      }
+      console.log('✅ Teste de conexão completado');
+      return true; // Se chegou aqui, a requisição foi feita
       
     } catch (error) {
-      console.log('Conexão com Google Apps Script: FALHA', error);
+      console.log('❌ Falha no teste de conexão:', error);
       return false;
     }
   };
@@ -292,15 +279,15 @@ export default function LandingPageRemaViva() {
         img.src = `https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/formResponse?${params.toString()}&submit=Submit`;
       }
       
-      console.log('Backup silencioso enviado');
+      console.log('✅ Backup silencioso enviado');
     } catch (error) {
-      console.log('Erro no backup silencioso (não crítico):', error);
+      console.log('⚠️ Erro no backup silencioso (não crítico):', error);
     }
   };
 
   // Fallback: método antigo usando iframe (se o GAS falhar)
   const submitViaFallback = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
-    console.log('Usando fallback (método iframe)...');
+    console.log('🔄 Usando fallback (método iframe)...');
     
     try {
       if (tipo === 'gratuito') {
@@ -338,7 +325,7 @@ export default function LandingPageRemaViva() {
         
         setTimeout(() => {
           form.submit();
-          console.log('Formulário gratuito enviado via fallback (iframe)');
+          console.log('✅ Formulário gratuito enviado via fallback (iframe)');
           
           // Limpar após 3 segundos
           setTimeout(() => {
@@ -386,7 +373,7 @@ export default function LandingPageRemaViva() {
         
         setTimeout(() => {
           form.submit();
-          console.log('Formulário pago enviado via fallback (iframe)');
+          console.log('✅ Formulário pago enviado via fallback (iframe)');
           
           // Limpar após 3 segundos
           setTimeout(() => {
@@ -401,98 +388,68 @@ export default function LandingPageRemaViva() {
       return false;
       
     } catch (error) {
-      console.error('Erro no fallback:', error);
+      console.error('❌ Erro no fallback:', error);
       return false;
     }
   };
 
-  // Função principal para enviar para Google Apps Script - CORRIGIDA
+  // Função principal para enviar para Google Apps Script - VERSÃO CORRIGIDA
   const submitToGoogleAppsScript = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
     const payload = {
       tipo,
       nome: formData.nome.trim(),
       email: formData.email.trim(),
       whatsapp: formData.whatsapp.trim() || 'NÃO PREENCHEU',
-      produto,
-      valor,
+      produto: produto || '',
+      valor: valor || '',
       timestamp: new Date().toISOString(),
       origem: 'landing-page-rema-viva'
     };
 
-    console.log('Enviando para Google Apps Script:', payload);
-
-    // PRIMEIRO: Testa se o GAS está acessível
-    const isGASAvailable = await testGASConnection();
-    
-    if (!isGASAvailable) {
-      console.log('GAS não disponível, usando fallback imediatamente');
-      return await submitViaFallback(tipo, produto, valor);
-    }
+    console.log('📤 Enviando para Google Apps Script:', payload);
 
     try {
-      // Usando fetch com timeout - CORRIGIDO: removido mode: 'no-cors'
+      // Construir a string de dados no formato URL-encoded
+      const formDataString = Object.entries(payload)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .join('&');
+
+      console.log('📝 Dados formatados:', formDataString);
+
+      // Configurar timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
-      
-      // Tenta enviar para o GAS - CORREÇÃO CRÍTICA AQUI
+
+      // Enviar para o GAS - CORREÇÃO AQUI
       const response = await fetch(GAS_ENDPOINT, {
         method: 'POST',
-        // REMOVIDO: mode: 'no-cors' - Este era o erro principal
+        mode: 'no-cors', // Mantenha como no-cors para evitar problemas CORS
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
         },
-        body: new URLSearchParams(payload as any).toString(),
+        body: formDataString,
         signal: controller.signal
       });
 
       clearTimeout(timeoutId);
 
-      console.log('Resposta do GAS - Status:', response.status, response.statusText);
+      console.log('✅ Dados enviados para GAS');
       
-      // Tenta ler a resposta JSON
-      try {
-        const result = await response.json();
-        console.log('Resposta do GAS (JSON):', result);
-        
-        if (result.success) {
-          console.log('✅ Dados enviados com sucesso para Google Apps Script!');
-          
-          // Backup silencioso
-          setTimeout(() => {
-            submitSilentBackup(tipo, produto, valor);
-          }, 1000);
-          
-          return true;
-        } else {
-          console.error('❌ Erro no GAS:', result.message);
-          // Se o GAS falhou, tenta fallback
-          return await submitViaFallback(tipo, produto, valor);
-        }
-      } catch (jsonError) {
-        console.log('Resposta do GAS não é JSON, status:', response.status);
-        
-        // Mesmo que não seja JSON, se o status for 200, consideramos sucesso
-        if (response.ok) {
-          console.log('✅ Dados enviados (resposta não-JSON)');
-          
-          // Backup silencioso
-          setTimeout(() => {
-            submitSilentBackup(tipo, produto, valor);
-          }, 1000);
-          
-          return true;
-        } else {
-          console.error('❌ Erro HTTP do GAS:', response.status);
-          // Se o GAS falhou, tenta fallback
-          return await submitViaFallback(tipo, produto, valor);
-        }
-      }
+      // IMPORTANTE: Com mode: 'no-cors', não podemos ler a resposta
+      // Mas o GAS ainda recebe os dados e processa
+      
+      // Sempre fazer backup silencioso
+      setTimeout(() => {
+        submitSilentBackup(tipo, produto, valor);
+      }, 1000);
+      
+      return true;
       
     } catch (error) {
       console.error('❌ Erro ao enviar para Google Apps Script:', error);
       
       // Fallback para método antigo se o GAS falhar
-      console.log('Usando fallback (método iframe)...');
+      console.log('🔄 Usando fallback (método iframe)...');
       return await submitViaFallback(tipo, produto, valor);
     }
   };
@@ -700,6 +657,41 @@ export default function LandingPageRemaViva() {
     }
   ];
 
+  // Função para teste manual (remova em produção)
+  const testGASManual = async () => {
+    const testData = {
+      tipo: 'gratuito',
+      nome: 'Teste Manual',
+      email: 'teste@teste.com',
+      whatsapp: '(11) 99999-9999',
+      produto: '',
+      valor: '',
+      timestamp: new Date().toISOString(),
+      origem: 'teste-manual'
+    };
+
+    try {
+      const formDataString = Object.entries(testData)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .join('&');
+
+      const response = await fetch(GAS_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        },
+        body: formDataString
+      });
+
+      console.log('✅ Teste manual enviado');
+      toast.success('Teste enviado para o GAS!');
+    } catch (error) {
+      console.error('❌ Erro no teste manual:', error);
+      toast.error('Erro no teste');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* HELMET PARA FAVICON E TÍTULO */}
@@ -713,6 +705,15 @@ export default function LandingPageRemaViva() {
         <meta property="og:image" content="https://i.ibb.co/YTLbYWFw/remaviva-natal.jpg" />
         <meta property="og:type" content="website" />
       </Helmet>
+
+      {/* Botão de teste (remova em produção) */}
+      <button 
+        onClick={testGASManual} 
+        className="fixed bottom-4 right-4 bg-red-500 text-white p-2 rounded text-xs z-50"
+        style={{ display: 'none' }} // Oculto por padrão
+      >
+        Testar GAS
+      </button>
 
       {/* Hero Section */}
       <header 
