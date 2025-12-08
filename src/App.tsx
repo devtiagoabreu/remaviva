@@ -46,8 +46,8 @@ const MERCADO_PAGO_LINKS = {
 // LINK DO PDF GRATUITO NO GOOGLE DRIVE
 const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
-// ENDPOINT DO GOOGLE APPS SCRIPT (SUBSTITUA COM SUA URL)
-const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzeXa9rF8rPt2sAzx0RsHojEtccqQ2WVGR6Os5YZy47KyrgO4-dFDnT4w59AgB2PA75/exec';
+// ENDPOINT DO GOOGLE APPS SCRIPT
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwo94fsz-P80m9kU8yF3Hj9lwrymqTqufzAB-tYyXrdpqfZtyM59qfx5V8CPhuN5sXW/exec';
 
 // IDs dos campos do Google Forms - CONFIRMADOS (mantidos para fallback)
 const FORM_FIELDS = {
@@ -232,45 +232,63 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // ============================================
-  // NOVAS FUNÇÕES PARA GOOGLE APPS SCRIPT
-  // ============================================
-
-  // Função principal para enviar para Google Apps Script
-  const submitToGoogleAppsScript = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
-    const payload = {
-      tipo,
-      nome: formData.nome.trim(),
-      email: formData.email.trim(),
-      whatsapp: formData.whatsapp.trim() || 'NÃO PREENCHEU',
-      produto,
-      valor,
-      timestamp: new Date().toISOString(),
-      origem: 'landing-page-rema-viva'
-    };
-
-    console.log('Enviando para Google Apps Script:', payload);
-
+  // Função auxiliar para testar conexão com GAS
+  const testGASConnection = async (): Promise<boolean> => {
     try {
-      // Usando fetch com 'no-cors' para evitar problemas de CORS
-      // O Google Apps Script aceita requisições de qualquer origem
-      const response = await fetch(GAS_ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors', // Importante: usa no-cors
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams(payload as any).toString()
+      console.log('Testando conexão com Google Apps Script...');
+      
+      // Tenta fazer uma requisição GET simples para verificar se o endpoint está online
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
+      
+      await fetch(`${GAS_ENDPOINT}?test=${Date.now()}`, {
+        method: 'GET',
+        mode: 'no-cors',
+        signal: controller.signal
       });
-
-      // Com 'no-cors' não podemos ler a resposta, mas sabemos que foi enviada
-      console.log('Dados enviados para Google Apps Script com sucesso');
+      
+      clearTimeout(timeoutId);
+      
+      console.log('Conexão com Google Apps Script: OK');
       return true;
       
     } catch (error) {
-      console.error('Erro ao enviar para Google Apps Script:', error);
-      // Fallback para método antigo se o GAS falhar
-      return await submitViaFallback(tipo, produto, valor);
+      console.log('Conexão com Google Apps Script: FALHA', error);
+      return false;
+    }
+  };
+
+  // Backup silencioso usando Image beacon
+  const submitSilentBackup = (tipo: 'gratuito' | 'pago', produto?: string, valor?: string) => {
+    try {
+      // Método alternativo usando imagem beacon (não bloqueante)
+      if (tipo === 'gratuito') {
+        const params = new URLSearchParams({
+          'entry.475459393': formData.nome,
+          'entry.1587784529': formData.email,
+          'entry.1708940276': formData.whatsapp || 'NÃO PREENCHEU'
+        });
+        
+        // Usa um Image beacon para enviar os dados (não bloqueante, sem CORS)
+        const img = new Image();
+        img.src = `https://docs.google.com/forms/d/e/1FAIpQLSd9zNxVhJEW-KOHqKqyONoXl8Gwij4-yuVeUXHJrIzKh77USg/formResponse?${params.toString()}&submit=Submit`;
+        
+      } else if (tipo === 'pago' && produto && valor) {
+        const params = new URLSearchParams({
+          'entry.1160029517': formData.nome,
+          'entry.2081423330': formData.email,
+          'entry.2014421681': produto,
+          'entry.1045548342': valor,
+          'entry.274487651': formData.whatsapp || 'NÃO PREENCHEU'
+        });
+        
+        const img = new Image();
+        img.src = `https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/formResponse?${params.toString()}&submit=Submit`;
+      }
+      
+      console.log('Backup silencioso enviado');
+    } catch (error) {
+      console.log('Erro no backup silencioso (não crítico):', error);
     }
   };
 
@@ -382,6 +400,67 @@ export default function LandingPageRemaViva() {
     }
   };
 
+  // Função principal para enviar para Google Apps Script
+  const submitToGoogleAppsScript = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
+    const payload = {
+      tipo,
+      nome: formData.nome.trim(),
+      email: formData.email.trim(),
+      whatsapp: formData.whatsapp.trim() || 'NÃO PREENCHEU',
+      produto,
+      valor,
+      timestamp: new Date().toISOString(),
+      origem: 'landing-page-rema-viva'
+    };
+
+    console.log('Enviando para Google Apps Script:', payload);
+
+    // PRIMEIRO: Testa se o GAS está acessível
+    const isGASAvailable = await testGASConnection();
+    
+    if (!isGASAvailable) {
+      console.log('GAS não disponível, usando fallback imediatamente');
+      return await submitViaFallback(tipo, produto, valor);
+    }
+
+    try {
+      // Usando fetch com timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+      
+      // Tenta enviar para o GAS
+      await fetch(GAS_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(payload as any).toString(),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      // Se chegou aqui, a requisição foi enviada
+      console.log('✅ Dados enviados para Google Apps Script');
+      
+      // Tenta também enviar via URL GET como backup silencioso
+      // para garantir que os dados cheguem de alguma forma
+      setTimeout(() => {
+        submitSilentBackup(tipo, produto, valor);
+      }, 1000);
+      
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Erro ao enviar para Google Apps Script:', error);
+      
+      // Fallback para método antigo se o GAS falhar
+      console.log('Usando fallback (método iframe)...');
+      return await submitViaFallback(tipo, produto, valor);
+    }
+  };
+
   // Função para material GRATUITO
   const handleSubmitGratuito = async () => {
     // Validação antes de enviar
@@ -474,10 +553,6 @@ export default function LandingPageRemaViva() {
       setIsSubmitting(false);
     }
   };
-
-  // ============================================
-  // FIM DAS NOVAS FUNÇÕES
-  // ============================================
 
   // Resetar formulário
   const resetForm = () => {
