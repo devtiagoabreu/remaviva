@@ -1291,7 +1291,7 @@ export default function LandingPageRemaViva() {
                   <p className="mt-1 text-sm text-red-600">{formErrors.whatsapp}</p>
                 ) : (
                   <p className="text-xs text-gray-500 mt-1">
-                    Não obrigatório, mas nos ajuda a enviar novidades
+                    Não obrigatório, mas nos ajuda a enviar novidades e prestar suporte.
                   </p>
                 )}
               </div>
@@ -1303,7 +1303,7 @@ export default function LandingPageRemaViva() {
                   Produto: {selectedProduct.name}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  Você será redirecionado para o Mercado Pago após enviar este formulário
+                  Você será redirecionado para o Mercado Pago após enviar este formulário, preencha com dados reais. Seu produto será enviado por email ou WhastsApp em até 2 horas.
                 </p>
               </div>
               <button 
