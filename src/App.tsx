@@ -50,7 +50,7 @@ const MERCADO_PAGO_LINKS = {
 // LINK DO PDF GRATUITO NO GOOGLE DRIVE
 const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
 
-// ENDPOINT DO GOOGLE APPS SCRIPT (ATUALIZADO)
+// ENDPOINT DO GOOGLE APPS SCRIPT (ATUALIZADO COM SUA URL)
 const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwoyl7TQeO2vv79BaL8ZWWvdEVftrgjzP9oL-I_GScDMzYWVXoYUr7_5BSTp7wfQGA3/exec';
 
 // Regex para validação
@@ -187,149 +187,52 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // Backup silencioso usando Image beacon
-  const submitSilentBackup = (tipo: 'gratuito' | 'pago', produto?: string, valor?: string) => {
-    try {
-      if (tipo === 'gratuito') {
-        const params = new URLSearchParams({
-          'entry.475459393': formData.nome,
-          'entry.1587784529': formData.email,
-          'entry.1708940276': formData.whatsapp || 'NÃO PREENCHEU'
-        });
-        const img = new Image();
-        img.src = `https://docs.google.com/forms/d/e/1FAIpQLSd9zNxVhJEW-KOHqKqyONoXl8Gwij4-yuVeUXHJrIzKh77USg/formResponse?${params.toString()}&submit=Submit`;
-      } else if (tipo === 'pago' && produto && valor) {
-        const params = new URLSearchParams({
-          'entry.1160029517': formData.nome,
-          'entry.2081423330': formData.email,
-          'entry.2014421681': produto,
-          'entry.1045548342': valor,
-          'entry.274487651': formData.whatsapp || 'NÃO PREENCHEU'
-        });
-        const img = new Image();
-        img.src = `https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn1sg44PjvVA/formResponse?${params.toString()}&submit=Submit`;
-      }
-      console.log('✅ Backup silencioso enviado');
-    } catch (error) {
-      console.log('⚠️ Erro no backup silencioso (não crítico):', error);
-    }
-  };
-
-  // Fallback: método antigo usando iframe (se o GAS falhar)
-  const submitViaFallback = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
-    console.log('🔄 Usando fallback (método iframe)...');
-    try {
-      // Escolha os campos conforme tipo
-      const payloadAny: Record<string,string> = {
-        tipo,
-        nome: formData.nome || '',
-        email: formData.email || '',
-        whatsapp: formData.whatsapp || 'NÃO PREENCHEU',
-        produto: produto || '',
-        valor: valor || ''
-      };
-
-      // Cria iframe oculto
-      const iframeName = `hidden_iframe_fallback_${Date.now()}`;
-      const iframe = document.createElement('iframe');
-      iframe.name = iframeName;
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-
-      // Cria form
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.target = iframeName;
-      form.action = GAS_ENDPOINT;
-      form.style.display = 'none';
-
-      Object.entries(payloadAny).forEach(([k, v]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = k;
-        input.value = v;
-        form.appendChild(input);
-      });
-
-      document.body.appendChild(form);
-
-      // Envia
-      form.submit();
-      console.log('✅ Enviado via form+iframe (fallback)');
-
-      // Limpeza
-      setTimeout(() => {
-        if (document.body.contains(form)) document.body.removeChild(form);
-        if (document.body.contains(iframe)) document.body.removeChild(iframe);
-      }, 3000);
-
-      // Também faz backup silencioso
-      setTimeout(() => submitSilentBackup(tipo, produto, valor), 800);
-
-      return true;
-    } catch (error) {
-      console.error('❌ Erro no fallback iframe:', error);
-      return false;
-    }
-  };
-
-  // FUNÇÃO PRINCIPAL - Envia para o seu GAS (robusta contra CORS)
+  // FUNÇÃO SIMPLIFICADA DE ENVIO - IGUAL AO FORMULÁRIO QUE FUNCIONA
   const submitToGoogleAppsScript = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
     const payload = {
       tipo,
       nome: formData.nome.trim(),
       email: formData.email.trim(),
-      whatsapp: formData.whatsapp.trim() || 'NÃO PREENCHEU',
+      whatsapp: formData.whatsapp.trim() || '',
       produto: produto || '',
       valor: valor || ''
     };
 
-    console.log('📤 Enviando para Google Apps Script (tentativa):', payload);
+    console.log('🔍 ========== ENVIO PARA APPS SCRIPT ==========');
+    console.log('📤 Dados sendo enviados:', payload);
+    console.log('🔗 URL do Apps Script:', GAS_ENDPOINT);
+    console.log('⏰ Horário do envio:', new Date().toISOString());
 
-    // 1) Tenta fetch normalmente (CORS-friendly). NÃO lê response body (evita erro em responses opacas).
     try {
-      const resp = await fetch(GAS_ENDPOINT, {
+      // EXATAMENTE IGUAL AO FORMULÁRIO QUE FUNCIONA
+      console.log('🔄 Enviando requisição (mode: no-cors)...');
+      
+      const response = await fetch(GAS_ENDPOINT, {
         method: 'POST',
+        mode: 'no-cors', // ← CRÍTICO: deve ser 'no-cors' para Apps Script
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload)
       });
 
-      // Se a requisição não lançar, consideramos envio realizado.
-      // Não tentamos ler resp.json() — isso causa exceção em respostas opacas.
-      if (resp && (resp.ok || resp.type === 'opaque' || resp.type === 'basic' || resp.type === 'cors')) {
-        console.log('✅ Envio via fetch concluído (não lemos body).');
-        // backup silencioso assíncrono
-        setTimeout(() => submitSilentBackup(tipo, produto, valor), 500);
-        return true;
-      } else {
-        console.log('⚠️ fetch retornou estado inesperado, prosseguindo para fallback.');
-      }
-    } catch (err) {
-      console.warn('⚠️ Envio via fetch com JSON falhou (possível CORS):', err);
-    }
-
-    // 2) Tenta enviar com mode: 'no-cors' (opaco) — último recurso antes do iframe
-    try {
-      await fetch(GAS_ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json'
-        } as any, // em no-cors o browser pode silenciar cabeçalhos, mas ok
-        body: JSON.stringify(payload)
-      });
-      console.log('✅ Enviado (no-cors) — resposta opaca assumida como sucesso');
-      setTimeout(() => submitSilentBackup(tipo, produto, valor), 500);
+      console.log('✅ REQUISIÇÃO ENVIADA COM SUCESSO!');
+      console.log('📝 Nota: Com mode: "no-cors" não podemos ler a resposta,');
+      console.log('mas se não houve erro, os dados foram enviados.');
+      console.log('👉 Verifique a planilha em:');
+      console.log('📊 https://docs.google.com/spreadsheets/d/1BX-r0vV70SoQNcBA4Hcdua6tckVGzuuL91OQEEn83xI');
+      
       return true;
-    } catch (errNoCors) {
-      console.warn('⚠️ Envio no-cors também falhou:', errNoCors);
-    }
 
-    // 3) Como última alternativa, tenta fallback via form+iframe (funciona em muitos casos)
-    const fallbackResult = await submitViaFallback(tipo, produto, valor);
-    return fallbackResult;
+    } catch (error) {
+      console.error('❌ ERRO NO ENVIO:', error);
+      console.log('🔧 Soluções possíveis:');
+      console.log('1. Verifique se o Apps Script está dentro da planilha correta');
+      console.log('2. Verifique as permissões da implantação ("Qualquer pessoa")');
+      console.log('3. Teste a URL manualmente no console do navegador');
+      
+      return false;
+    }
   };
 
   // Função para material GRATUITO
@@ -343,15 +246,20 @@ export default function LandingPageRemaViva() {
     const loadingToast = toast.loading('Enviando seus dados...');
     
     try {
+      console.log('🟡 Iniciando envio do formulário GRATUITO...');
       const success = await submitToGoogleAppsScript('gratuito');
       toast.dismiss(loadingToast);
+      
       if (success) {
-        toast.success('✅ Dados enviados com sucesso!');
+        toast.success('✅ Dados enviados com sucesso! Redirecionando para o PDF...');
+        // Aguarda 1 segundo antes de redirecionar
+        setTimeout(() => {
+          window.open(PDF_GRATUITO_URL, '_blank');
+          closeFreeModal();
+        }, 1000);
       } else {
         toast.error('❌ Não foi possível enviar seus dados. Tente novamente.');
       }
-      closeFreeModal();
-      setTimeout(() => window.open(PDF_GRATUITO_URL, '_blank'), 1000);
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error('❌ Erro ao enviar dados. Por favor, tente novamente.');
@@ -376,19 +284,21 @@ export default function LandingPageRemaViva() {
     const loadingToast = toast.loading('Enviando seus dados...');
     
     try {
+      console.log('🟡 Iniciando envio do formulário PAGO...');
       const success = await submitToGoogleAppsScript('pago', selectedProduct.name, selectedProduct.price);
       toast.dismiss(loadingToast);
+      
       if (success) {
         toast.success('✅ Dados enviados! Redirecionando para pagamento...');
+        setTimeout(() => {
+          const mercadoPagoLink = selectedProduct.type === 'serie1' ? MERCADO_PAGO_LINKS.serie1 : MERCADO_PAGO_LINKS.kit3;
+          window.open(mercadoPagoLink, '_blank');
+          closePaidModal();
+          resetForm();
+        }, 1500);
       } else {
         toast.error('❌ Não foi possível registrar seu pedido. Tente novamente.');
       }
-      closePaidModal();
-      setTimeout(() => {
-        const mercadoPagoLink = selectedProduct.type === 'serie1' ? MERCADO_PAGO_LINKS.serie1 : MERCADO_PAGO_LINKS.kit3;
-        window.open(mercadoPagoLink, '_blank');
-        resetForm();
-      }, 2000);
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error('❌ Erro ao enviar dados. Por favor, tente novamente.');
