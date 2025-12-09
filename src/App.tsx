@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import {
   Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail,
-  Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock, ArrowRight
+  Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock, ArrowRight,
+  MessageCircle, Instagram, Facebook, Youtube
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -56,6 +57,14 @@ const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwoyl7TQeO2vv79BaL
 // Regex para validação
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const WHATSAPP_REGEX = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
+
+// Redes Sociais
+const SOCIAL_LINKS = {
+  whatsapp: 'https://wa.me/5514999999999?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20os%20produtos%20da%20Editora%20Rema%20Viva.',
+  instagram: 'https://www.instagram.com/editoraremaviva/',
+  facebook: 'https://www.facebook.com/editoraremaviva',
+  youtube: 'https://www.youtube.com/@editoraremaviva'
+};
 
 export default function LandingPageRemaViva() {
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 30 });
@@ -326,6 +335,11 @@ export default function LandingPageRemaViva() {
     (window as any).testarEnvioRemaViva = testarEnvioDireto;
     console.log('🔧 Função de teste disponível: testarEnvioRemaViva()');
   }, []);
+
+  // Função para abrir redes sociais em nova aba
+  const openSocialLink = (platform: keyof typeof SOCIAL_LINKS) => {
+    window.open(SOCIAL_LINKS[platform], '_blank', 'noopener,noreferrer');
+  };
 
   // Função para material GRATUITO
   const handleSubmitGratuito = async () => {
@@ -1056,6 +1070,60 @@ export default function LandingPageRemaViva() {
         </div>
       </footer>
 
+      {/* BARRA FLUTUANTE DE REDES SOCIAIS */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <div className="flex flex-col items-center gap-3">
+          {/* WhatsApp - Destaque */}
+          <button
+            onClick={() => openSocialLink('whatsapp')}
+            className="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 transition-all duration-300 animate-bounce"
+            style={{ 
+              backgroundColor: '#25D366',
+              animation: 'bounce 2s infinite'
+            }}
+            aria-label="Conversar no WhatsApp"
+            title="Conversar no WhatsApp"
+          >
+            <MessageCircle className="w-7 h-7 text-white" />
+          </button>
+          
+          {/* Outras redes sociais */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 shadow-xl flex flex-col gap-3 border border-gray-200/50">
+            <button
+              onClick={() => openSocialLink('instagram')}
+              className="w-10 h-10 rounded-full flex items-center justify-center transform hover:scale-110 transition-all duration-300 hover:shadow-lg"
+              style={{ 
+                background: 'linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D, #F56040, #F77737, #FCAF45, #FFDC80)'
+              }}
+              aria-label="Seguir no Instagram"
+              title="Seguir no Instagram"
+            >
+              <Instagram className="w-5 h-5 text-white" />
+            </button>
+            
+            <button
+              onClick={() => openSocialLink('facebook')}
+              className="w-10 h-10 rounded-full flex items-center justify-center transform hover:scale-110 transition-all duration-300 hover:shadow-lg"
+              style={{ backgroundColor: '#1877F2' }}
+              aria-label="Curtir no Facebook"
+              title="Curtir no Facebook"
+            >
+              <Facebook className="w-5 h-5 text-white" />
+            </button>
+            
+            <button
+              onClick={() => openSocialLink('youtube')}
+              className="w-10 h-10 rounded-full flex items-center justify-center transform hover:scale-110 transition-all duration-300 hover:shadow-lg"
+              style={{ backgroundColor: '#FF0000' }}
+              aria-label="Inscrever-se no YouTube"
+              title="Inscrever-se no YouTube"
+            >
+              <Youtube className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Modal Material Gratuito */}
       {showFreeModal && (
         <div 
@@ -1338,4 +1406,4 @@ export default function LandingPageRemaViva() {
       )}
     </div>
   );
-} 
+}
