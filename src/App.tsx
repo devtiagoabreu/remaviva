@@ -1,4 +1,4 @@
-// App.tsx
+// App.tsx ok
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import {
@@ -1338,4 +1338,4 @@ export default function LandingPageRemaViva() {
       )}
     </div>
   );
-}
+} 
