@@ -187,53 +187,145 @@ export default function LandingPageRemaViva() {
     }
   };
 
-  // FUNÇÃO SIMPLIFICADA DE ENVIO - IGUAL AO FORMULÁRIO QUE FUNCIONA
+  // FUNÇÃO DE ENVIO COM DEBUG AVANÇADO
   const submitToGoogleAppsScript = async (tipo: 'gratuito' | 'pago', produto?: string, valor?: string): Promise<boolean> => {
     const payload = {
-      tipo,
       nome: formData.nome.trim(),
       email: formData.email.trim(),
       whatsapp: formData.whatsapp.trim() || '',
+      tipo: tipo,
       produto: produto || '',
       valor: valor || ''
     };
 
-    console.log('🔍 ========== ENVIO PARA APPS SCRIPT ==========');
-    console.log('📤 Dados sendo enviados:', payload);
-    console.log('🔗 URL do Apps Script:', GAS_ENDPOINT);
-    console.log('⏰ Horário do envio:', new Date().toISOString());
+    console.log('🔍 ========== DEBUG DETALHADO ==========');
+    console.log('📤 PAYLOAD A SER ENVIADO:', JSON.stringify(payload, null, 2));
+    console.log('🔗 URL DO APPS SCRIPT:', GAS_ENDPOINT);
+    console.log('⏰ TIMESTAMP:', new Date().toISOString());
+    console.log('📝 HEADERS que serão enviados:', {
+      'Content-Type': 'application/json'
+    });
 
     try {
-      // EXATAMENTE IGUAL AO FORMULÁRIO QUE FUNCIONA
-      console.log('🔄 Enviando requisição (mode: no-cors)...');
-      
+      console.log('🔄 ENVIANDO REQUISIÇÃO FETCH...');
+      console.log('📋 Configuração do fetch:', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      // TENTATIVA 1: Fetch normal com no-cors
+      const inicio = Date.now();
       const response = await fetch(GAS_ENDPOINT, {
         method: 'POST',
-        mode: 'no-cors', // ← CRÍTICO: deve ser 'no-cors' para Apps Script
+        mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload)
       });
 
-      console.log('✅ REQUISIÇÃO ENVIADA COM SUCESSO!');
-      console.log('📝 Nota: Com mode: "no-cors" não podemos ler a resposta,');
-      console.log('mas se não houve erro, os dados foram enviados.');
-      console.log('👉 Verifique a planilha em:');
-      console.log('📊 https://docs.google.com/spreadsheets/d/1BX-r0vV70SoQNcBA4Hcdua6tckVGzuuL91OQEEn83xI');
+      const tempo = Date.now() - inicio;
+      console.log('✅ FETCH COMPLETADO!');
+      console.log('⏱️ Tempo de resposta:', tempo + 'ms');
+      console.log('📊 Tipo de resposta:', response.type);
+      console.log('🔗 URL da resposta:', response.url);
+      console.log('📈 Status (aprox.):', response.ok ? 'OK' : 'Não OK');
+      console.log('ℹ️ Com "no-cors" não podemos ler o corpo da resposta');
       
+      // TENTATIVA 2: Backup usando o método antigo (form submit)
+      setTimeout(() => {
+        console.log('🔄 TENTANDO MÉTODO ALTERNATIVO (backup)...');
+        enviarViaFormBackup(payload);
+      }, 500);
+
       return true;
 
-    } catch (error) {
-      console.error('❌ ERRO NO ENVIO:', error);
-      console.log('🔧 Soluções possíveis:');
-      console.log('1. Verifique se o Apps Script está dentro da planilha correta');
-      console.log('2. Verifique as permissões da implantação ("Qualquer pessoa")');
-      console.log('3. Teste a URL manualmente no console do navegador');
+    } catch (error: any) {
+      console.error('❌ ERRO NO FETCH:', error);
+      console.error('📝 Mensagem:', error.message);
+      console.error('🔗 URL que falhou:', error.url || GAS_ENDPOINT);
       
+      // Tenta método alternativo imediatamente
+      console.log('🔄 TENTANDO MÉTODO ALTERNATIVO APÓS ERRO...');
+      const sucessoBackup = enviarViaFormBackup(payload);
+      
+      return sucessoBackup;
+    }
+  };
+
+  // MÉTODO ALTERNATIVO: Envia via form submit (funciona quando fetch falha)
+  const enviarViaFormBackup = (payload: any): boolean => {
+    try {
+      console.log('🔧 INICIANDO MÉTODO ALTERNATIVO (form submit)');
+      
+      // Cria um form oculto
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = GAS_ENDPOINT;
+      form.style.display = 'none';
+      form.target = '_blank'; // Abre em nova aba para não interferir
+      
+      // Adiciona campos
+      Object.keys(payload).forEach(key => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = payload[key];
+        form.appendChild(input);
+      });
+      
+      // Adiciona ao body e submete
+      document.body.appendChild(form);
+      form.submit();
+      
+      // Remove após 3 segundos
+      setTimeout(() => {
+        if (document.body.contains(form)) {
+          document.body.removeChild(form);
+        }
+      }, 3000);
+      
+      console.log('✅ MÉTODO ALTERNATIVO ENVIADO');
+      return true;
+      
+    } catch (backupError) {
+      console.error('❌ MÉTODO ALTERNATIVO TAMBÉM FALHOU:', backupError);
       return false;
     }
   };
+
+  // TESTE DIRETO NO CONSOLE - função auxiliar
+  const testarEnvioDireto = () => {
+    const testData = {
+      nome: 'TESTE CONSOLE REACT',
+      email: 'console@react.com',
+      whatsapp: '(11) 98765-4321',
+      tipo: 'teste_console',
+      produto: 'Produto Teste Console',
+      valor: 'R$ 29,90'
+    };
+
+    console.log('🧪 TESTE DIRETO DO CONSOLE REACT');
+    console.log('📤 Dados:', testData);
+    console.log('🔗 URL:', GAS_ENDPOINT);
+    
+    fetch(GAS_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(testData)
+    })
+    .then(() => console.log('✅ Teste enviado - verifique a planilha!'))
+    .catch(e => console.error('❌ Erro no teste:', e));
+  };
+
+  // Adiciona a função ao window para testar no console
+  useEffect(() => {
+    (window as any).testarEnvioRemaViva = testarEnvioDireto;
+    console.log('🔧 Função de teste disponível: testarEnvioRemaViva()');
+  }, []);
 
   // Função para material GRATUITO
   const handleSubmitGratuito = async () => {
@@ -246,17 +338,18 @@ export default function LandingPageRemaViva() {
     const loadingToast = toast.loading('Enviando seus dados...');
     
     try {
-      console.log('🟡 Iniciando envio do formulário GRATUITO...');
+      console.log('🟡 ========== INICIANDO ENVIO GRATUITO ==========');
       const success = await submitToGoogleAppsScript('gratuito');
       toast.dismiss(loadingToast);
       
       if (success) {
         toast.success('✅ Dados enviados com sucesso! Redirecionando para o PDF...');
-        // Aguarda 1 segundo antes de redirecionar
+        // Aguarda 1.5 segundos antes de redirecionar
         setTimeout(() => {
           window.open(PDF_GRATUITO_URL, '_blank');
           closeFreeModal();
-        }, 1000);
+          resetForm();
+        }, 1500);
       } else {
         toast.error('❌ Não foi possível enviar seus dados. Tente novamente.');
       }
@@ -284,7 +377,7 @@ export default function LandingPageRemaViva() {
     const loadingToast = toast.loading('Enviando seus dados...');
     
     try {
-      console.log('🟡 Iniciando envio do formulário PAGO...');
+      console.log('🟡 ========== INICIANDO ENVIO PAGO ==========');
       const success = await submitToGoogleAppsScript('pago', selectedProduct.name, selectedProduct.price);
       toast.dismiss(loadingToast);
       
