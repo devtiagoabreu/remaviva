@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import {
   Heart, BookOpen, Users, Download, Check, Star, Clock, Shield, Mail,
   Phone, ChevronDown, CreditCard, Gift, Sparkles, Award, Target, Lock, ArrowRight,
-  MessageCircle, Instagram, Facebook, Youtube
+  MessageCircle, Instagram, Facebook, Youtube, ChevronUp
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -49,7 +49,7 @@ const MERCADO_PAGO_LINKS = {
 };
 
 // LINK DO PDF GRATUITO NO GOOGLE DRIVE
-const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1mqVqA0OyKHZI_XsSMFuvS8s1yqB6bpu3/view?usp=sharing';
+const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1_1mgxLic1_8Rai04Rtt-wS-IVAOFGK3r/view?usp=sharing';
 
 // ENDPOINT DO GOOGLE APPS SCRIPT (ATUALIZADO COM SUA URL)
 const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwoyl7TQeO2vv79BaL8ZWWvdEVftrgjzP9oL-I_GScDMzYWVXoYUr7_5BSTp7wfQGA3/exec';
@@ -70,6 +70,9 @@ export default function LandingPageRemaViva() {
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 30 });
   const [showFreeModal, setShowFreeModal] = useState(false);
   const [showPaidModal, setShowPaidModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<{type: 'serie1' | 'kit3', name: string, price: string} | null>(null);
   const [formData, setFormData] = useState<FormData>({ nome: '', email: '', whatsapp: '' });
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -79,6 +82,8 @@ export default function LandingPageRemaViva() {
   // Refs para focus trap
   const freeModalRef = useRef<HTMLDivElement>(null);
   const paidModalRef = useRef<HTMLDivElement>(null);
+  const termsModalRef = useRef<HTMLDivElement>(null);
+  const privacyModalRef = useRef<HTMLDivElement>(null);
   const lastFocusedElement = useRef<HTMLElement | null>(null);
 
   // Timer countdown
@@ -96,17 +101,23 @@ export default function LandingPageRemaViva() {
 
   // Efeito para controlar scroll e focus nos modais
   useEffect(() => {
-    if (showFreeModal || showPaidModal) {
+    if (showFreeModal || showPaidModal || showTermsModal || showPrivacyModal) {
       lastFocusedElement.current = document.activeElement as HTMLElement;
       document.body.style.overflow = 'hidden';
       setTimeout(() => {
-        const modal = showFreeModal ? freeModalRef.current : paidModalRef.current;
+        let modal = null;
+        if (showFreeModal) modal = freeModalRef.current;
+        else if (showPaidModal) modal = paidModalRef.current;
+        else if (showTermsModal) modal = termsModalRef.current;
+        else if (showPrivacyModal) modal = privacyModalRef.current;
         if (modal) modal.focus();
       }, 100);
       const handleEsc = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           if (showFreeModal) closeFreeModal();
-          if (showPaidModal) closePaidModal();
+          else if (showPaidModal) closePaidModal();
+          else if (showTermsModal) setShowTermsModal(false);
+          else if (showPrivacyModal) setShowPrivacyModal(false);
         }
       };
       document.addEventListener('keydown', handleEsc);
@@ -115,7 +126,16 @@ export default function LandingPageRemaViva() {
       document.body.style.overflow = 'auto';
       if (lastFocusedElement.current) lastFocusedElement.current.focus();
     }
-  }, [showFreeModal, showPaidModal]);
+  }, [showFreeModal, showPaidModal, showTermsModal, showPrivacyModal]);
+
+  // Efeito para mostrar/ocultar botão de voltar ao topo
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Função para fazer focus trap (manter foco dentro do modal)
   const handleTabKey = (e: React.KeyboardEvent, modalRef: React.RefObject<HTMLDivElement>) => {
@@ -138,6 +158,14 @@ export default function LandingPageRemaViva() {
         e.preventDefault();
       }
     }
+  };
+
+  // Função para voltar ao topo
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   // Validação do formulário
@@ -1063,8 +1091,18 @@ export default function LandingPageRemaViva() {
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
             <p>&copy; 2025 Editora Rema Viva. Todos os direitos reservados.</p>
             <div className="mt-2 space-x-4">
-              <a href="#" className="hover:text-yellow-400 transition-colors">Termos de Uso</a>
-              <a href="#" className="hover:text-yellow-400 transition-colors">Política de Privacidade</a>
+              <button 
+                onClick={() => setShowTermsModal(true)}
+                className="hover:text-yellow-400 transition-colors"
+              >
+                Termos de Uso
+              </button>
+              <button 
+                onClick={() => setShowPrivacyModal(true)}
+                className="hover:text-yellow-400 transition-colors"
+              >
+                Política de Privacidade
+              </button>
             </div>
           </div>
         </div>
@@ -1123,6 +1161,22 @@ export default function LandingPageRemaViva() {
           </div>
         </div>
       </div>
+
+      {/* Botão de voltar ao topo - Parte inferior esquerda */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 left-6 z-40 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 transition-all duration-300"
+          style={{ 
+            backgroundColor: COLORS.blue,
+            color: 'white'
+          }}
+          aria-label="Voltar ao topo"
+          title="Voltar ao topo"
+        >
+          <ChevronUp className="w-6 h-6" />
+        </button>
+      )}
 
       {/* Modal Material Gratuito */}
       {showFreeModal && (
@@ -1400,6 +1454,272 @@ export default function LandingPageRemaViva() {
               <p className="text-xs text-gray-500 text-center">
                 Pagamento seguro via Mercado Pago. Seus dados estão protegidos.
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Termos de Uso */}
+      {showTermsModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="terms-modal-title"
+          onClick={() => setShowTermsModal(false)}
+        >
+          <div 
+            ref={termsModalRef}
+            tabIndex={-1}
+            onKeyDown={(e) => handleTabKey(e, termsModalRef)}
+            className="bg-white rounded-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-8 relative outline-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setShowTermsModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+              aria-label="Fechar modal"
+            >
+              ✕
+            </button>
+            <h3 
+              id="terms-modal-title"
+              className="text-2xl font-bold mb-6 text-gray-800"
+            >
+              📄 Termos de Uso - Editora Rema Viva
+            </h3>
+            <div className="space-y-4 text-gray-700">
+              <p><strong>Última atualização: Janeiro de 2025</strong></p>
+              
+              <div>
+                <h4 className="font-bold text-lg mb-2">1. Aceitação dos Termos</h4>
+                <p>
+                  Ao acessar e utilizar os materiais da Editora Rema Viva, você concorda com estes Termos de Uso. 
+                  Se você não concordar com qualquer parte destes termos, não utilize nossos produtos ou serviços.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">2. Licença de Uso</h4>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Os materiais adquiridos são para uso pessoal e ministerial.</li>
+                  <li>É permitida a impressão e distribuição em igrejas, escolas bíblicas e ministérios cristãos.</li>
+                  <li>É proibida a revenda, redistribuição comercial ou modificação para fins comerciais.</li>
+                  <li>Os materiais não podem ser compartilhados em plataformas de venda ou afiliadas.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">3. Propriedade Intelectual</h4>
+                <p>
+                  Todo o conteúdo (textos, ilustrações, atividades) é de propriedade exclusiva da Editora Rema Viva. 
+                  Os direitos autorais são protegidos pela legislação brasileira e tratados internacionais.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">4. Pagamentos e Reembolsos</h4>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Os pagamentos são processados através do Mercado Pago.</li>
+                  <li>Em caso de insatisfação, entre em contato em até 7 dias para solicitar reembolso.</li>
+                  <li>O acesso ao material é disponibilizado imediatamente após a confirmação do pagamento.</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">5. Responsabilidades</h4>
+                <p>
+                  A Editora Rema Viva não se responsabiliza por:
+                </p>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Uso inadequado do material</li>
+                  <li>Problemas técnicos de terceiros (Mercado Pago, provedores de email, etc.)</li>
+                  <li>Interpretações teológicas divergentes</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">6. Alterações nos Termos</h4>
+                <p>
+                  Reservamo-nos o direito de modificar estes termos a qualquer momento. 
+                  As alterações entrarão em vigor imediatamente após sua publicação no site.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">7. Contato</h4>
+                <p>
+                  Para questões sobre estes Termos de Uso, entre em contato:
+                </p>
+                <ul className="list-none pl-5 space-y-1 mt-2">
+                  <li>📧 Email: remaviva@gmail.com</li>
+                  <li>📱 WhatsApp: (14) 99999-9999</li>
+                </ul>
+              </div>
+            </div>
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <button 
+                onClick={() => setShowTermsModal(false)}
+                className="px-6 py-3 rounded-lg font-bold transition-colors w-full"
+                style={{ 
+                  backgroundColor: COLORS.blue,
+                  color: 'white'
+                }}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Política de Privacidade */}
+      {showPrivacyModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="privacy-modal-title"
+          onClick={() => setShowPrivacyModal(false)}
+        >
+          <div 
+            ref={privacyModalRef}
+            tabIndex={-1}
+            onKeyDown={(e) => handleTabKey(e, privacyModalRef)}
+            className="bg-white rounded-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-8 relative outline-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setShowPrivacyModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+              aria-label="Fechar modal"
+            >
+              ✕
+            </button>
+            <h3 
+              id="privacy-modal-title"
+              className="text-2xl font-bold mb-6 text-gray-800"
+            >
+              🔒 Política de Privacidade - Editora Rema Viva
+            </h3>
+            <div className="space-y-4 text-gray-700">
+              <p><strong>Última atualização: Janeiro de 2025</strong></p>
+              
+              <div>
+                <h4 className="font-bold text-lg mb-2">1. Informações Coletadas</h4>
+                <p>
+                  Coletamos as seguintes informações quando você interage conosco:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 mt-2">
+                  <li><strong>Informações pessoais:</strong> nome completo, email, telefone (opcional)</li>
+                  <li><strong>Informações de pagamento:</strong> processadas exclusivamente pelo Mercado Pago</li>
+                  <li><strong>Dados de uso:</strong> páginas visitadas, downloads realizados, interações</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">2. Como Usamos Suas Informações</h4>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Enviar os materiais adquiridos</li>
+                  <li>Processar pagamentos e entregar produtos</li>
+                  <li>Enviar comunicações sobre novos produtos (com possibilidade de cancelamento)</li>
+                  <li>Melhorar nossos produtos e serviços</li>
+                  <li>Responder a dúvidas e solicitações de suporte</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">3. Compartilhamento de Dados</h4>
+                <p>
+                  <strong>NÃO</strong> vendemos, alugamos ou compartilhamos seus dados pessoais com terceiros, exceto:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 mt-2">
+                  <li><strong>Processadores de pagamento:</strong> Mercado Pago (dados necessários para transação)</li>
+                  <li><strong>Provedores de serviço:</strong> Google (planilhas para registro de leads)</li>
+                  <li><strong>Exigência legal:</strong> quando exigido por lei ou processo judicial</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">4. Segurança dos Dados</h4>
+                <p>
+                  Implementamos medidas de segurança para proteger suas informações:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 mt-2">
+                  <li>Dados armazenados em planilhas do Google com acesso restrito</li>
+                  <li>Comunicação segura via HTTPS</li>
+                  <li>Acesso limitado apenas a pessoal autorizado</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">5. Seus Direitos</h4>
+                <p>
+                  Você tem direito a:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 mt-2">
+                  <li>Acessar suas informações pessoais</li>
+                  <li>Corrigir dados incorretos</li>
+                  <li>Solicitar a exclusão de seus dados</li>
+                  <li>Cancelar o recebimento de comunicações</li>
+                  <li>Revogar consentimentos dados</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">6. Cookies e Tecnologias Similares</h4>
+                <p>
+                  Podemos usar cookies para melhorar sua experiência:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 mt-2">
+                  <li>Cookies essenciais para funcionamento do site</li>
+                  <li>Cookies de desempenho para análise de uso</li>
+                  <li>Você pode controlar cookies através das configurações do navegador</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">7. Retenção de Dados</h4>
+                <p>
+                  Mantemos seus dados pelo tempo necessário para:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 mt-2">
+                  <li>Cumprir obrigações legais</li>
+                  <li>Resolver disputas</li>
+                  <li>Aplicar nossos termos de uso</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">8. Contato sobre Privacidade</h4>
+                <p>
+                  Para exercer seus direitos ou tirar dúvidas sobre privacidade:
+                </p>
+                <ul className="list-none pl-5 space-y-1 mt-2">
+                  <li>📧 Email: remaviva@gmail.com</li>
+                  <li>📱 WhatsApp: (14) 99999-9999</li>
+                  <li>📬 Resposta em até 30 dias úteis</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2">9. Alterações nesta Política</h4>
+                <p>
+                  Podemos atualizar esta política periodicamente. Notificaremos sobre mudanças significativas.
+                </p>
+              </div>
+            </div>
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <button 
+                onClick={() => setShowPrivacyModal(false)}
+                className="px-6 py-3 rounded-lg font-bold transition-colors w-full"
+                style={{ 
+                  backgroundColor: COLORS.green,
+                  color: 'white'
+                }}
+              >
+                Fechar
+              </button>
             </div>
           </div>
         </div>
