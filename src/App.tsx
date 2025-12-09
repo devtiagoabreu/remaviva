@@ -43,12 +43,12 @@ const COLORS = {
 
 // URLs DO MERCADO PAGO
 const MERCADO_PAGO_LINKS = {
-  serie1: 'https://mpago.li/1QAb8kq',
-  kit3: 'https://mpago.la/2AdPPmt',
+  serie1: 'https://mpago.la/2yincPZ',
+  kit3: 'https://mpago.la/2AP2zxE',
 };
 
 // LINK DO PDF GRATUITO NO GOOGLE DRIVE
-const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1l3BNC-qSIdn7r8eIafc6Pwv5-0m_koBH/view?usp=sharing';
+const PDF_GRATUITO_URL = 'https://drive.google.com/file/d/1mqVqA0OyKHZI_XsSMFuvS8s1yqB6bpu3/view?usp=sharing';
 
 // ENDPOINT DO GOOGLE APPS SCRIPT (ATUALIZADO COM SUA URL)
 const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwoyl7TQeO2vv79BaL8ZWWvdEVftrgjzP9oL-I_GScDMzYWVXoYUr7_5BSTp7wfQGA3/exec';
@@ -1219,7 +1219,7 @@ export default function LandingPageRemaViva() {
               id="paid-modal-title"
               className="text-2xl font-bold mb-4 text-gray-800"
             >
-              🛒 Finalizar Compra - {selectedProduct.name}
+              🛒 Iniciar Compra - {selectedProduct.name}
             </h3>
             <p className="text-gray-600 mb-6">
               Preencha seus dados para prosseguir com a compra:
