@@ -12,8 +12,8 @@ https://docs.google.com/forms/d/e/1FAIpQLSecb_jjWXZlqQsbVofhL4hZCPq7AsZNS5oAbqWn
 npm install react-helmet
 npm install --save-dev @types/react-helmet
 
-# App da Web
-AKfycbzeXa9rF8rPt2sAzx0RsHojEtccqQ2WVGR6Os5YZy47KyrgO4-dFDnT4w59AgB2PA75
+# Código de implantação
+AKfycbwoyl7TQeO2vv79BaL8ZWWvdEVftrgjzP9oL-I_GScDMzYWVXoYUr7_5BSTp7wfQGA3
 
 # App da Web
-https://script.google.com/macros/s/AKfycbzeXa9rF8rPt2sAzx0RsHojEtccqQ2WVGR6Os5YZy47KyrgO4-dFDnT4w59AgB2PA75/exec
+https://script.google.com/macros/s/AKfycbwoyl7TQeO2vv79BaL8ZWWvdEVftrgjzP9oL-I_GScDMzYWVXoYUr7_5BSTp7wfQGA3/exec
