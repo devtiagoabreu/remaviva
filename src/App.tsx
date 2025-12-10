@@ -7,6 +7,7 @@ import {
   MessageCircle, Instagram, Facebook, Youtube, ChevronUp
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import TagManager from 'react-gtm-module';
 
 // Definição de tipos TypeScript
 interface FormData {
@@ -31,6 +32,18 @@ interface Testimonial {
   role: string;
   text: string;
 }
+
+// IDs DO GOOGLE ANALYTICS E TAG MANAGER
+const GA4_MEASUREMENT_ID = 'G-HCLXXD74FX';
+const GTM_ID = 'GTM-MGNWKFTN';
+
+// Configuração do GTM
+const gtmConfig = {
+  gtmId: GTM_ID,
+  // Para desenvolvimento (opcional)
+  auth: 'Z58KQn7ZvF4q45u2IVQZ_w',
+  preview: 'env-1',
+};
 
 // Nova paleta de cores
 const COLORS = {
@@ -66,6 +79,23 @@ const SOCIAL_LINKS = {
   youtube: 'https://www.youtube.com/@editoraremaviva'
 };
 
+// Funções de rastreamento GTM/GA4
+const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
+  // Para GTM
+  if (typeof window !== 'undefined' && window.dataLayer) {
+    window.dataLayer.push({
+      event: eventName,
+      ...eventParams
+    });
+    console.log(`📊 Evento GTM enviado: ${eventName}`, eventParams);
+  }
+  
+  // Para GA4 direto (backup)
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', eventName, eventParams);
+  }
+};
+
 export default function LandingPageRemaViva() {
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 30 });
   const [showFreeModal, setShowFreeModal] = useState(false);
@@ -85,6 +115,70 @@ export default function LandingPageRemaViva() {
   const termsModalRef = useRef<HTMLDivElement>(null);
   const privacyModalRef = useRef<HTMLDivElement>(null);
   const lastFocusedElement = useRef<HTMLElement | null>(null);
+
+  // Inicializar GTM e GA4
+  useEffect(() => {
+    // Inicializar Google Tag Manager
+    if (GTM_ID && process.env.NODE_ENV === 'production') {
+      try {
+        TagManager.initialize(gtmConfig);
+        console.log('✅ GTM inicializado com sucesso - ID:', GTM_ID);
+        
+        // Enviar evento de inicialização
+        if (window.dataLayer) {
+          window.dataLayer.push({
+            event: 'gtm_init',
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV,
+            page_type: 'landing_page',
+            business: 'editora_rema_viva'
+          });
+        }
+      } catch (error) {
+        console.error('❌ Erro ao inicializar GTM:', error);
+      }
+    } else {
+      console.log('🚧 GTM não inicializado (ambiente de desenvolvimento)');
+    }
+
+    // Inicializar GA4 diretamente também (como backup)
+    if (GA4_MEASUREMENT_ID && process.env.NODE_ENV === 'production') {
+      const script1 = document.createElement('script');
+      script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`;
+      script1.async = true;
+      document.head.appendChild(script1);
+
+      const script2 = document.createElement('script');
+      script2.innerHTML = `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${GA4_MEASUREMENT_ID}');
+      `;
+      document.head.appendChild(script2);
+      
+      console.log('✅ GA4 inicializado com sucesso - ID:', GA4_MEASUREMENT_ID);
+    }
+    
+    // Track page view inicial
+    trackEvent('page_view', {
+      page_title: 'Editora Rema Viva - Landing Page',
+      page_location: window.location.href,
+      page_path: window.location.pathname
+    });
+    
+    // Rastrear tempo na página
+    const startTime = Date.now();
+    return () => {
+      const timeSpent = Math.round((Date.now() - startTime) / 1000);
+      if (timeSpent > 10) {
+        trackEvent('time_on_page', {
+          time_seconds: timeSpent,
+          page_title: document.title
+        });
+      }
+    };
+  }, []);
 
   // Timer countdown
   useEffect(() => {
@@ -132,6 +226,19 @@ export default function LandingPageRemaViva() {
   useEffect(() => {
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > 300);
+      
+      // Rastrear scroll
+      const scrollPercentage = Math.round(
+        (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+      );
+      
+      // Rastrear apenas em marcos importantes
+      if ([25, 50, 75, 90].includes(scrollPercentage)) {
+        trackEvent('scroll', {
+          scroll_percentage: scrollPercentage,
+          page_title: document.title
+        });
+      }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -162,6 +269,11 @@ export default function LandingPageRemaViva() {
 
   // Função para voltar ao topo
   const scrollToTop = () => {
+    trackEvent('button_click', {
+      button_name: 'voltar_ao_topo',
+      button_location: 'floating'
+    });
+    
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
@@ -366,6 +478,11 @@ export default function LandingPageRemaViva() {
 
   // Função para abrir redes sociais em nova aba
   const openSocialLink = (platform: keyof typeof SOCIAL_LINKS) => {
+    trackEvent('social_click', {
+      social_platform: platform,
+      button_location: 'floating_social'
+    });
+    
     window.open(SOCIAL_LINKS[platform], '_blank', 'noopener,noreferrer');
   };
 
@@ -381,10 +498,39 @@ export default function LandingPageRemaViva() {
     
     try {
       console.log('🟡 ========== INICIANDO ENVIO GRATUITO ==========');
+      
+      // Rastrear envio do formulário gratuito
+      trackEvent('form_submit', {
+        form_type: 'gratuito',
+        form_name: 'download_gratuito',
+        form_status: 'started'
+      });
+      
       const success = await submitToGoogleAppsScript('gratuito');
       toast.dismiss(loadingToast);
       
       if (success) {
+        // Rastrear sucesso no envio
+        trackEvent('form_submit', {
+          form_type: 'gratuito',
+          form_name: 'download_gratuito',
+          form_status: 'success'
+        });
+        
+        // Rastrear download
+        trackEvent('download', {
+          download_type: 'gratuito',
+          file_name: 'lição_amostra',
+          value: 0,
+          currency: 'BRL'
+        });
+        
+        // Rastrear lead
+        trackEvent('generate_lead', {
+          lead_type: 'gratuito',
+          lead_source: 'landing_page'
+        });
+        
         toast.success('✅ Dados enviados com sucesso! Redirecionando para o PDF...');
         // Aguarda 1.5 segundos antes de redirecionar
         setTimeout(() => {
@@ -393,6 +539,13 @@ export default function LandingPageRemaViva() {
           resetForm();
         }, 1500);
       } else {
+        // Rastrear falha no envio
+        trackEvent('form_submit', {
+          form_type: 'gratuito',
+          form_name: 'download_gratuito',
+          form_status: 'error'
+        });
+        
         toast.error('❌ Não foi possível enviar seus dados. Tente novamente.');
       }
     } catch (error) {
@@ -420,10 +573,54 @@ export default function LandingPageRemaViva() {
     
     try {
       console.log('🟡 ========== INICIANDO ENVIO PAGO ==========');
+      
+      const price = parseFloat(selectedProduct.price.replace('R$ ', '').replace(',', '.'));
+      
+      // Rastrear início de checkout
+      trackEvent('begin_checkout', {
+        currency: 'BRL',
+        value: price,
+        items: [{
+          item_id: selectedProduct.type,
+          item_name: selectedProduct.name,
+          price: price,
+          quantity: 1
+        }]
+      });
+      
+      // Rastrear envio do formulário pago
+      trackEvent('form_submit', {
+        form_type: 'pago',
+        form_name: 'checkout',
+        product_id: selectedProduct.type,
+        product_name: selectedProduct.name,
+        product_price: price,
+        form_status: 'started'
+      });
+      
       const success = await submitToGoogleAppsScript('pago', selectedProduct.name, selectedProduct.price);
       toast.dismiss(loadingToast);
       
       if (success) {
+        // Rastrear sucesso no envio
+        trackEvent('form_submit', {
+          form_type: 'pago',
+          form_name: 'checkout',
+          product_id: selectedProduct.type,
+          product_name: selectedProduct.name,
+          product_price: price,
+          form_status: 'success'
+        });
+        
+        // Rastrear lead
+        trackEvent('generate_lead', {
+          lead_type: 'pago',
+          lead_source: 'landing_page',
+          product_id: selectedProduct.type,
+          product_name: selectedProduct.name,
+          product_price: price
+        });
+        
         toast.success('✅ Dados enviados! Redirecionando para pagamento...');
         setTimeout(() => {
           const mercadoPagoLink = selectedProduct.type === 'serie1' ? MERCADO_PAGO_LINKS.serie1 : MERCADO_PAGO_LINKS.kit3;
@@ -432,6 +629,16 @@ export default function LandingPageRemaViva() {
           resetForm();
         }, 1500);
       } else {
+        // Rastrear falha no envio
+        trackEvent('form_submit', {
+          form_type: 'pago',
+          form_name: 'checkout',
+          product_id: selectedProduct.type,
+          product_name: selectedProduct.name,
+          product_price: price,
+          form_status: 'error'
+        });
+        
         toast.error('❌ Não foi possível registrar seu pedido. Tente novamente.');
       }
     } catch (error) {
@@ -451,6 +658,14 @@ export default function LandingPageRemaViva() {
 
   const toggleFaq = (index: number) => {
     setFaqOpen(prev => ({ ...prev, [index]: !prev[index] }));
+    
+    // Rastrear clique no FAQ
+    if (!faqOpen[index]) {
+      trackEvent('faq_open', {
+        faq_index: index,
+        faq_question: faqItems[index].q.substring(0, 100)
+      });
+    }
   };
 
   // Funções para abrir modais PAGOS
@@ -462,6 +677,26 @@ export default function LandingPageRemaViva() {
       price: 'R$ 19,90'
     });
     setShowPaidModal(true);
+    
+    // Rastrear visualização de produto
+    trackEvent('view_item', {
+      currency: 'BRL',
+      value: 19.90,
+      items: [{
+        item_id: 'serie1',
+        item_name: 'Série: Quem é Jesus? - Lição 1',
+        price: 19.90,
+        item_category: 'material_biblico'
+      }]
+    });
+    
+    // Rastrear clique no botão
+    trackEvent('button_click', {
+      button_name: 'comprar_serie1',
+      button_location: 'produtos_section',
+      product_id: 'serie1',
+      product_price: 19.90
+    });
   };
 
   const openKit3Modal = () => {
@@ -472,6 +707,26 @@ export default function LandingPageRemaViva() {
       price: 'R$ 49,90'
     });
     setShowPaidModal(true);
+    
+    // Rastrear visualização de produto
+    trackEvent('view_item', {
+      currency: 'BRL',
+      value: 49.90,
+      items: [{
+        item_id: 'kit3',
+        item_name: 'Kit Completo - 3 lições',
+        price: 49.90,
+        item_category: 'material_biblico'
+      }]
+    });
+    
+    // Rastrear clique no botão
+    trackEvent('button_click', {
+      button_name: 'comprar_kit3',
+      button_location: 'produtos_section',
+      product_id: 'kit3',
+      product_price: 49.90
+    });
   };
 
   // Funções para fechar modais
@@ -489,6 +744,12 @@ export default function LandingPageRemaViva() {
   const openFreeModal = () => {
     resetForm();
     setShowFreeModal(true);
+    
+    // Rastrear clique no botão de download gratuito
+    trackEvent('button_click', {
+      button_name: 'baixar_gratuito',
+      button_location: 'hero_section'
+    });
   };
 
   // Dados para renderização
@@ -555,7 +816,7 @@ export default function LandingPageRemaViva() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* HELMET PARA FAVICON E TÍTULO */}
+      {/* HELMET PARA FAVICON, TÍTULO E SCRIPTS DO GTM/GA4 */}
       <Helmet>
         <link rel="icon" href="https://i.ibb.co/VpxG4Qv3/favicon-32x32.png" />
         <title>Editora Rema Viva - Materiais Bíblicos Cristocêntricos</title>
@@ -565,7 +826,46 @@ export default function LandingPageRemaViva() {
         <meta property="og:description" content="Conteúdo bíblico, cristocêntrico e fácil de aplicar. Economize horas de preparação e ensine as crianças com profundidade, clareza e simplicidade." />
         <meta property="og:image" content="https://i.ibb.co/YTLbYWFw/remaviva-natal.jpg" />
         <meta property="og:type" content="website" />
+        
+        {/* Google Tag Manager */}
+        {process.env.NODE_ENV === 'production' && (
+          <>
+            <script>
+              {`
+                (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                })(window,document,'script','dataLayer','${GTM_ID}');
+              `}
+            </script>
+            
+            {/* Google Analytics 4 */}
+            <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`} />
+            <script>
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA4_MEASUREMENT_ID}');
+              `}
+            </script>
+          </>
+        )}
       </Helmet>
+
+      {/* Google Tag Manager (noscript) */}
+      {process.env.NODE_ENV === 'production' && (
+        <noscript>
+          <iframe 
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0" 
+            width="0" 
+            style={{display: 'none', visibility: 'hidden'}}
+            title="Google Tag Manager"
+          />
+        </noscript>
+      )}
 
       {/* Hero Section */}
       <header 
@@ -611,6 +911,12 @@ export default function LandingPageRemaViva() {
                 
                 <a 
                   href="#assinatura"
+                  onClick={() => {
+                    trackEvent('button_click', {
+                      button_name: 'ver_produtos',
+                      button_location: 'hero_section'
+                    });
+                  }}
                   className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-2 flex-1 border-2 border-white bg-transparent hover:bg-white/10"
                 >
                   <ArrowRight className="w-6 h-6" />
@@ -1044,6 +1350,12 @@ export default function LandingPageRemaViva() {
             </button>
             <a 
               href="#assinatura"
+              onClick={() => {
+                trackEvent('button_click', {
+                  button_name: 'ver_produtos',
+                  button_location: 'final_cta'
+                });
+              }}
               className="px-8 py-4 rounded-lg text-xl font-bold hover:scale-105 transition-all shadow-2xl inline-block flex items-center justify-center gap-2"
               style={{ 
                 backgroundColor: 'white',
@@ -1082,7 +1394,18 @@ export default function LandingPageRemaViva() {
             <div>
               <h4 className="font-bold mb-4">Siga-nos</h4>
               <div className="space-y-2 text-gray-400">
-                <a href="https://www.instagram.com/editoraremaviva/" target="_blank" rel="noopener noreferrer" className="block hover:text-yellow-400 transition-colors">
+                <a 
+                  href="https://www.instagram.com/editoraremaviva/" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="block hover:text-yellow-400 transition-colors"
+                  onClick={() => {
+                    trackEvent('social_click', {
+                      social_platform: 'instagram',
+                      button_location: 'footer'
+                    });
+                  }}
+                >
                   📱 Instagram @editoraremaviva
                 </a>
               </div>
@@ -1092,13 +1415,25 @@ export default function LandingPageRemaViva() {
             <p>&copy; 2025 Editora Rema Viva. Todos os direitos reservados.</p>
             <div className="mt-2 space-x-4">
               <button 
-                onClick={() => setShowTermsModal(true)}
+                onClick={() => {
+                  setShowTermsModal(true);
+                  trackEvent('link_click', {
+                    link_type: 'terms',
+                    link_location: 'footer'
+                  });
+                }}
                 className="hover:text-yellow-400 transition-colors"
               >
                 Termos de Uso
               </button>
               <button 
-                onClick={() => setShowPrivacyModal(true)}
+                onClick={() => {
+                  setShowPrivacyModal(true);
+                  trackEvent('link_click', {
+                    link_type: 'privacy',
+                    link_location: 'footer'
+                  });
+                }}
                 className="hover:text-yellow-400 transition-colors"
               >
                 Política de Privacidade
