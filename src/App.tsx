@@ -79,6 +79,14 @@ const SOCIAL_LINKS = {
   youtube: 'https://www.youtube.com/@editoraremaviva'
 };
 
+// Declaração para window.dataLayer
+declare global {
+  interface Window {
+    dataLayer: any[];
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 // Funções de rastreamento GTM/GA4
 const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
   // Para GTM
@@ -119,7 +127,7 @@ export default function LandingPageRemaViva() {
   // Inicializar GTM e GA4
   useEffect(() => {
     // Inicializar Google Tag Manager
-    if (GTM_ID && process.env.NODE_ENV === 'production') {
+    if (GTM_ID && import.meta.env.PROD) {
       try {
         TagManager.initialize(gtmConfig);
         console.log('✅ GTM inicializado com sucesso - ID:', GTM_ID);
@@ -129,7 +137,7 @@ export default function LandingPageRemaViva() {
           window.dataLayer.push({
             event: 'gtm_init',
             timestamp: new Date().toISOString(),
-            environment: process.env.NODE_ENV,
+            environment: import.meta.env.MODE,
             page_type: 'landing_page',
             business: 'editora_rema_viva'
           });
@@ -138,11 +146,11 @@ export default function LandingPageRemaViva() {
         console.error('❌ Erro ao inicializar GTM:', error);
       }
     } else {
-      console.log('🚧 GTM não inicializado (ambiente de desenvolvimento)');
+      console.log('🚧 GTM não inicializado (ambiente:', import.meta.env.MODE, ')');
     }
 
     // Inicializar GA4 diretamente também (como backup)
-    if (GA4_MEASUREMENT_ID && process.env.NODE_ENV === 'production') {
+    if (GA4_MEASUREMENT_ID && import.meta.env.PROD) {
       const script1 = document.createElement('script');
       script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`;
       script1.async = true;
@@ -828,7 +836,7 @@ export default function LandingPageRemaViva() {
         <meta property="og:type" content="website" />
         
         {/* Google Tag Manager */}
-        {process.env.NODE_ENV === 'production' && (
+        {import.meta.env.PROD && (
           <>
             <script>
               {`
@@ -855,7 +863,7 @@ export default function LandingPageRemaViva() {
       </Helmet>
 
       {/* Google Tag Manager (noscript) */}
-      {process.env.NODE_ENV === 'production' && (
+      {import.meta.env.PROD && (
         <noscript>
           <iframe 
             src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
