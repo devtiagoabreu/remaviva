@@ -1383,11 +1383,11 @@ export default function LandingPageRemaViva() {
               <div className="space-y-2 text-gray-400">
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
-                  <span>remaviva@gmail.com</span>
+                  <span>editoraremaviva@gmail.com</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
-                  <span>(14) 99999-9999</span>
+                  <span>(19) 99999-9999</span>
                 </div>
               </div>
             </div>
@@ -1887,8 +1887,8 @@ export default function LandingPageRemaViva() {
                   Para questões sobre estes Termos de Uso, entre em contato:
                 </p>
                 <ul className="list-none pl-5 space-y-1 mt-2">
-                  <li>📧 Email: remaviva@gmail.com</li>
-                  <li>📱 WhatsApp: (14) 99999-9999</li>
+                  <li>📧 Email: editoraremaviva@gmail.com</li>
+                  <li>📱 WhatsApp: (19) 99999-9999</li>
                 </ul>
               </div>
             </div>
@@ -2031,8 +2031,8 @@ export default function LandingPageRemaViva() {
                   Para exercer seus direitos ou tirar dúvidas sobre privacidade:
                 </p>
                 <ul className="list-none pl-5 space-y-1 mt-2">
-                  <li>📧 Email: remaviva@gmail.com</li>
-                  <li>📱 WhatsApp: (14) 99999-9999</li>
+                  <li>📧 Email: editoraremaviva@gmail.com</li>
+                  <li>📱 WhatsApp: (19) 99999-9999</li>
                   <li>📬 Resposta em até 30 dias úteis</li>
                 </ul>
               </div>
