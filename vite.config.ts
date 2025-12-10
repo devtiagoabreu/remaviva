@@ -13,6 +13,12 @@ export default defineConfig({
       '@hooks': path.resolve(__dirname, './src/hooks'),
     }
   },
+  define: {
+    // Configura as variáveis de ambiente do Vite
+    'import.meta.env.PROD': JSON.stringify(process.env.NODE_ENV === 'production'),
+    'import.meta.env.DEV': JSON.stringify(process.env.NODE_ENV === 'development'),
+    'import.meta.env.MODE': JSON.stringify(process.env.NODE_ENV || 'development'),
+  },
   server: {
     port: 5173,
     host: true,
@@ -25,7 +31,8 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          ui: ['lucide-react']
+          ui: ['lucide-react', 'react-hot-toast'],
+          analytics: ['react-gtm-module', 'react-helmet'],
         }
       }
     }
