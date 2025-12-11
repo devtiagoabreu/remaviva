@@ -1158,7 +1158,7 @@ export default function LandingPageRemaViva() {
                 <h3 className="text-2xl font-bold mb-4">Série: Quem é Jesus?</h3>
                 <div className="mb-4 flex flex-col items-center">
                   <span className="text-5xl font-bold" style={{ color: COLORS.blue }}>R$ 19,90</span>
-                  <span className="text-gray-600 text-lg">/único</span>
+                  <span className="text-gray-600 text-lg"></span>
                 </div>
                 <div className="text-center text-gray-600 mb-6">
                   <p className="font-medium">Lição 1 - Jesus: Filho de Deus</p>
