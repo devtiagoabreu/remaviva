@@ -897,7 +897,7 @@ export default function LandingPageRemaViva() {
                 </div>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Lições Inesquecíveis para o Ministério Infantil – Bíblica, Simples e Perfeita para as crianças.
+                Lições Bíblicas Inesquecíveis para o Ministério Infantil.
               </h1>
               <p className="text-xl mb-8 opacity-90">
                 Conteúdo bíblico, cristocêntrico e fácil de aplicar. Economize horas de preparação e ensine as crianças com profundidade, clareza e simplicidade.
