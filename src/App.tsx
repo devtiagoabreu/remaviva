@@ -1213,10 +1213,10 @@ export default function LandingPageRemaViva() {
                 <h3 className="text-2xl font-bold mb-4 mt-2">Kit Completo</h3>
                 <div className="mb-4 flex flex-col items-center">
                   <span className="text-5xl font-bold" style={{ color: COLORS.green }}>R$ 49,90</span>
-                  <span className="text-gray-600 text-lg">/kit completo</span>
+                  <span className="text-gray-600 text-lg"></span>
                 </div>
                 <div className="text-center text-gray-600 mb-6">
-                  <p className="font-medium">3 primeiras lições da série</p>
+                  <p className="font-medium"></p>
                   <p className="text-sm text-gray-500 line-through mt-1">R$ 59,70</p>
                   <p className="font-bold mt-2" style={{ color: COLORS.green }}>
                     Economize R$ 9,80 (16% OFF)
