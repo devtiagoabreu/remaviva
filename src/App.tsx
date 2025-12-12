@@ -73,7 +73,7 @@ const WHATSAPP_REGEX = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
 
 // Redes Sociais
 const SOCIAL_LINKS = {
-  whatsapp: 'https://wa.me/5514999999999?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20os%20produtos%20da%20Editora%20Rema%20Viva.',
+  whatsapp: 'https://wa.me/5519990032960?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20os%20produtos%20da%20Editora%20Rema%20Viva.',
   instagram: 'https://www.instagram.com/editoraremaviva/',
   facebook: 'https://www.facebook.com/editoraremaviva',
   youtube: 'https://www.youtube.com/@editoraremaviva'
@@ -1395,7 +1395,7 @@ export default function LandingPageRemaViva() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
-                  <span>(19) 99999-9999</span>
+                  <span>(19) 99003-2960</span>
                 </div>
               </div>
             </div>
@@ -1896,7 +1896,7 @@ export default function LandingPageRemaViva() {
                 </p>
                 <ul className="list-none pl-5 space-y-1 mt-2">
                   <li>📧 Email: editoraremaviva@gmail.com</li>
-                  <li>📱 WhatsApp: (19) 99999-9999</li>
+                  <li>📱 WhatsApp: (19) 99003-2960</li>
                 </ul>
               </div>
             </div>
@@ -2040,7 +2040,7 @@ export default function LandingPageRemaViva() {
                 </p>
                 <ul className="list-none pl-5 space-y-1 mt-2">
                   <li>📧 Email: editoraremaviva@gmail.com</li>
-                  <li>📱 WhatsApp: (19) 99999-9999</li>
+                  <li>📱 WhatsApp: (19) 99003-2960</li>
                   <li>📬 Resposta em até 30 dias úteis</li>
                 </ul>
               </div>
